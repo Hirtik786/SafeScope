@@ -27,5 +27,11 @@ Two caps make sure one serious problem is never hidden by many good results:
 - any **critical** finding (for example an expired certificate) → grade **F**
 - any **high** finding (for example no HTTPS) → grade at most **C**
 
+Findings with status `skipped` (could not be tested), `info` and `error` never
+change the score: SafeScope does not reward or punish what it could not see.
+
+**A grade is an indicator, not proof that a site is secure.** It only covers the
+passive checks listed in [checks.md](checks.md).
+
 The implementation is in [`src/safescope/scoring.py`](../src/safescope/scoring.py). The model
 is deliberately simple; proposals to refine it are welcome as issues.

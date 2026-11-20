@@ -2,6 +2,7 @@
 (function () {
   "use strict";
 
+  var STATUS_LABEL = { skipped: "not tested" };
   var CHECK_NAMES = {
     transport: "HTTPS & HSTS", tls: "TLS & certificate", headers: "Security headers",
     cookies: "Cookie security", disclosure: "Information disclosure"
@@ -74,7 +75,7 @@
   function renderFinding(f) {
     var item = el("div", "item");
     var row = el("div", "row");
-    row.appendChild(el("span", "badge st-" + f.status, f.status));
+    row.appendChild(el("span", "badge st-" + f.status, STATUS_LABEL[f.status] || f.status));
     row.appendChild(el("span", null, f.title));
     if (isProblem(f) && f.severity !== "info") row.appendChild(el("span", "sev sev-" + f.severity, f.severity));
     item.appendChild(row);

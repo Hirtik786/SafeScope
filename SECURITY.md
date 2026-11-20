@@ -4,7 +4,8 @@
 
 | Version | Supported |
 |---|---|
-| 0.1.x | ✅ |
+| 0.2.x | ✅ |
+| 0.1.x | ❌ (upgrade: 0.2.0 fixes a DNS rebinding bypass in the web service) |
 
 ## Reporting a vulnerability
 
@@ -25,6 +26,11 @@ not passive.
 
 Out of scope: findings SafeScope reports about third-party websites. Contact those site owners
 directly (ideally via their `security.txt`).
+
+## How SafeScope protects itself
+
+The threat model, SSRF/DNS-rebinding protection and service limits are described
+in [docs/security-model.md](docs/security-model.md).
 
 ## Responsible use
 

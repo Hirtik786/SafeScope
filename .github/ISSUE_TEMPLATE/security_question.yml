@@ -1,0 +1,16 @@
+name: Security question
+description: Ask how SafeScope handles something security-related (not for reporting vulnerabilities)
+labels: [security, question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Found a vulnerability?** Do not open a public issue. Report it privately:
+        https://github.com/Karim-Bazooka/SafeScope/security/advisories/new
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: For example how the SSRF guard treats IPv6, or what a finding means.
+    validations:
+      required: true

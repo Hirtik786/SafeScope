@@ -45,15 +45,36 @@ in short:
 2. Keep network access in `run()` and the logic in a pure `analyze()` method.
 3. Register it in `src/safescope/checks/__init__.py`.
 4. Add tests in `tests/` using the `make_ctx` fixture (no real network).
-5. Add a row to the *What it checks* table in the README.
+5. Add every new finding ID to [docs/checks.md](docs/checks.md) (a test enforces it)
+   and, for a new check family, a row to the *What it checks* table in the README.
+
+## Branches and workflow
+
+| Branch | Purpose |
+|---|---|
+| `main` | Released, deployed code. Vercel deploys every push to `main`. |
+| `dev` | Integration branch. CI runs on every push; changes reach `main` only when CI is green. |
+| `feat/*`, `fix/*`, `docs/*`, `test/*` | One change each, opened as a PR against `dev`. |
+| `security/*` | Security fixes. Do not describe an unfixed vulnerability publicly; see [SECURITY.md](SECURITY.md). |
+
+The steps for every change:
+
+1. Open (or pick) an issue that describes the problem.
+2. Branch from `dev` and write a test that shows the expected behaviour first.
+3. Make the smallest change that passes it. Do not mix refactors with fixes.
+4. Run `ruff check .`, `ruff format --check .`, `mypy` and `pytest`.
+5. Read your own diff: no secrets, no unrelated changes, no error messages that leak data.
+6. Open the PR, link the issue, explain risks and tests, wait for green CI.
 
 ## Pull requests
 
-1. Fork and create a branch: `git checkout -b feat/mixed-content-check`.
+1. Fork and create a branch: `git checkout -b feat/mixed-content-check dev`.
 2. Use [Conventional Commits](https://www.conventionalcommits.org/) for messages,
    e.g. `feat(headers): flag CSP without object-src`.
 3. Add an entry under **Unreleased** in `CHANGELOG.md`.
-4. Open the PR and fill in the template. CI must be green.
+4. Open the PR against `dev` and fill in the template. CI must be green
+   (lint, format, mypy, tests on Linux/Windows/macOS with an 85% coverage gate,
+   wheel install and the GitHub Action self-test).
 
 ## Reporting bugs
 

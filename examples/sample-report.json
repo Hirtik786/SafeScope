@@ -1,12 +1,13 @@
 {
+  "schema_version": 1,
   "tool": {
     "name": "SafeScope",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "target": "http://127.0.0.1:8000/",
   "final_url": "http://127.0.0.1:8000/",
-  "started_at": "2026-11-20T14:18:31+00:00",
-  "duration_seconds": 0.012,
+  "started_at": "2026-11-20T18:59:50+00:00",
+  "duration_seconds": 0.009,
   "score": 5,
   "grade": "F",
   "summary": {
@@ -34,7 +35,8 @@
       "evidence": "TLS error: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1035)",
       "references": [
         "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "transport.http.no_redirect",
@@ -47,7 +49,8 @@
       "evidence": "http://127.0.0.1:8000/ answered 200 without redirecting",
       "references": [
         "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "headers.csp.unsafe",
@@ -60,7 +63,8 @@
       "evidence": "default-src * 'unsafe-inline' 'unsafe-eval'",
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "headers.framing.missing",
@@ -74,7 +78,8 @@
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "headers.nosniff.missing",
@@ -87,7 +92,8 @@
       "evidence": "",
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "headers.referrer.missing",
@@ -100,7 +106,8 @@
       "evidence": "",
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "headers.permissions.missing",
@@ -114,7 +121,8 @@
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy",
         "https://owasp.org/www-project-secure-headers/"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "headers.x_xss_protection.enabled",
@@ -127,7 +135,8 @@
       "evidence": "1; mode=block",
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "cookies.PHPSESSID.flags",
@@ -140,7 +149,8 @@
       "evidence": "attributes: path",
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
-      ]
+      ],
+      "confidence": "medium"
     },
     {
       "id": "cookies.tracking.flags",
@@ -153,7 +163,8 @@
       "evidence": "attributes: samesite",
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "disclosure.versions",
@@ -166,7 +177,8 @@
       "evidence": "Server: Apache/2.4.41 (Ubuntu); X-Powered-By: PHP/7.4.3",
       "references": [
         "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server"
-      ]
+      ],
+      "confidence": "high"
     },
     {
       "id": "disclosure.cors.wildcard_credentials",
@@ -177,7 +189,8 @@
       "description": "This combination is invalid and signals a CORS configuration that may reflect arbitrary origins on other endpoints.",
       "recommendation": "Allow-list specific trusted origins instead of '*'.",
       "evidence": "Access-Control-Allow-Origin: *; Access-Control-Allow-Credentials: true",
-      "references": []
+      "references": [],
+      "confidence": "high"
     },
     {
       "id": "disclosure.security_txt.missing",
@@ -190,7 +203,8 @@
       "evidence": "HTTP 404",
       "references": [
         "https://securitytxt.org/"
-      ]
+      ],
+      "confidence": "high"
     }
   ]
 }

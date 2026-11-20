@@ -24,7 +24,21 @@
 pip install git+https://github.com/Karim-Bazooka/SafeScope.git
 safescope scan example.com
 safescope scan example.com -f html -o report.html
+safescope scan a.com b.com --targets-file sites.txt   # كذا موقع مع بعض
+safescope scan example.com -f sarif -o out.sarif      # لـ GitHub code scanning
+safescope report scan.json -f html -o report.html     # تعرض scan محفوظ بشكل تاني
 ```
+
+## الجديد في v0.2.0
+
+- **حماية من DNS rebinding:** الموقع العام بيتصل بالـ IP اللي اتشيّك عليه بالظبط، فمحدش يقدر يغيّر رد الـ DNS بين التشييك والاتصال.
+- **نتايج صادقة:** أي اختبار متعملش بيظهر `skipped`، ومبيظهرش كأنه نجح. وكل نتيجة ليها confidence.
+- **حدود للموقع العام:** 25 ثانية للـ scan، و 4 scans في نفس الوقت، و 10 scans في الدقيقة لكل IP.
+- **مزايا جديدة:** scan لكذا موقع، وتقرير SARIF، وأمر `report`.
+
+## حدود الأداة
+
+الدرجة الكويسة معناها إن الفحوصات السلبية نجحت، **مش دليل إن الموقع آمن**. SafeScope مش بديل عن اختبار الاختراق، ومبيدورش على ثغرات زي XSS أو SQL injection.
 
 ## جربه على جهازك من غير ما تفحص موقع حد
 
@@ -42,7 +56,10 @@ safescope scan http://127.0.0.1:8000 --skip tls
 5. باقي الـ checks، وبعدين `scanner.py` و `scoring.py`.
 6. `src/safescope/reporters/` — إزاي النتيجة بتتحول لـ console / JSON / HTML.
 7. `src/safescope/cli.py` — الأوامر اللي بتكتبها في الترمينال.
-8. `tests/` — كل جزء ليه tests بتشتغل من غير إنترنت.
+8. `src/safescope/netguard.py` — حماية الـ SSRF والـ DNS pinning.
+9. `tests/` — كل جزء ليه tests بتشتغل من غير إنترنت.
+
+ولفهم الصورة الكاملة: [architecture.md](architecture.md) و [security-model.md](security-model.md) و [checks.md](checks.md).
 
 ## ⚖️ استخدام مسؤول
 

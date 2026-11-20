@@ -1,0 +1,582 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SafeScope",
+          "version": "0.2.0",
+          "informationUri": "https://github.com/Karim-Bazooka/SafeScope",
+          "rules": [
+            {
+              "id": "transport.https.unavailable",
+              "name": "transport_https_unavailable",
+              "shortDescription": {
+                "text": "HTTPS is not available"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "transport"
+                ],
+                "security-severity": "7.5"
+              },
+              "fullDescription": {
+                "text": "The site could not be loaded over HTTPS, so all traffic can be read or modified by anyone on the network path."
+              },
+              "help": {
+                "text": "Serve the site over HTTPS (free certificates are available from Let's Encrypt)."
+              },
+              "helpUri": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+            },
+            {
+              "id": "transport.http.no_redirect",
+              "name": "transport_http_no_redirect",
+              "shortDescription": {
+                "text": "HTTP does not redirect to HTTPS"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "transport"
+                ],
+                "security-severity": "5.0"
+              },
+              "fullDescription": {
+                "text": "Visitors who type the address without https:// stay on an unencrypted connection."
+              },
+              "help": {
+                "text": "Answer every plain HTTP request with a 301 redirect to the HTTPS version of the same URL."
+              },
+              "helpUri": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+            },
+            {
+              "id": "headers.csp.unsafe",
+              "name": "headers_csp_unsafe",
+              "shortDescription": {
+                "text": "CSP allows unsafe script sources"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "headers"
+                ],
+                "security-severity": "5.0"
+              },
+              "fullDescription": {
+                "text": "These sources weaken the policy enough that it may not stop XSS: 'unsafe-inline', 'unsafe-eval', *"
+              },
+              "help": {
+                "text": "Replace inline scripts with nonces or hashes and remove 'unsafe-eval' and wildcards from script-src."
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"
+            },
+            {
+              "id": "headers.framing.missing",
+              "name": "headers_framing_missing",
+              "shortDescription": {
+                "text": "No clickjacking protection"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "headers"
+                ],
+                "security-severity": "5.0"
+              },
+              "fullDescription": {
+                "text": "Other sites can embed this page in an invisible frame and trick users into clicking on it (clickjacking)."
+              },
+              "help": {
+                "text": "Send \"Content-Security-Policy: frame-ancestors 'self'\" or 'X-Frame-Options: DENY'."
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"
+            },
+            {
+              "id": "headers.nosniff.missing",
+              "name": "headers_nosniff_missing",
+              "shortDescription": {
+                "text": "X-Content-Type-Options: nosniff is missing"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "headers"
+                ],
+                "security-severity": "2.0"
+              },
+              "fullDescription": {
+                "text": "Browsers may guess ('sniff') content types and execute uploaded files as scripts."
+              },
+              "help": {
+                "text": "Send 'X-Content-Type-Options: nosniff'."
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"
+            },
+            {
+              "id": "headers.referrer.missing",
+              "name": "headers_referrer_missing",
+              "shortDescription": {
+                "text": "Referrer-Policy header is missing"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "headers"
+                ],
+                "security-severity": "2.0"
+              },
+              "fullDescription": {
+                "text": "Full URLs (which may contain tokens or private paths) can leak to other sites through the Referer header."
+              },
+              "help": {
+                "text": "Send 'Referrer-Policy: strict-origin-when-cross-origin'."
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
+            },
+            {
+              "id": "headers.permissions.missing",
+              "name": "headers_permissions_missing",
+              "shortDescription": {
+                "text": "Permissions-Policy header is missing"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "headers"
+                ],
+                "security-severity": "2.0"
+              },
+              "fullDescription": {
+                "text": "Without it, embedded content may request powerful features such as the camera, microphone or geolocation."
+              },
+              "help": {
+                "text": "Disable what you do not use, e.g. 'Permissions-Policy: camera=(), microphone=(), geolocation=()'."
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
+            },
+            {
+              "id": "headers.x_xss_protection.enabled",
+              "name": "headers_x_xss_protection_enabled",
+              "shortDescription": {
+                "text": "Deprecated X-XSS-Protection filter is enabled"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "headers"
+                ],
+                "security-severity": "2.0"
+              },
+              "fullDescription": {
+                "text": "The legacy XSS auditor has been removed from modern browsers and could introduce cross-site leaks in old ones."
+              },
+              "help": {
+                "text": "Send 'X-XSS-Protection: 0' (or drop it) and rely on a strong CSP."
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection"
+            },
+            {
+              "id": "cookies.PHPSESSID.flags",
+              "name": "cookies_PHPSESSID_flags",
+              "shortDescription": {
+                "text": "Cookie 'PHPSESSID': missing HttpOnly, missing SameSite"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "cookies"
+                ],
+                "security-severity": "5.0"
+              },
+              "fullDescription": {
+                "text": "Secure keeps the cookie off plain HTTP, HttpOnly hides it from JavaScript (limiting XSS damage) and SameSite helps against CSRF."
+              },
+              "help": {
+                "text": "Set-Cookie: PHPSESSID=...; Secure; HttpOnly; SameSite=Lax"
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
+            },
+            {
+              "id": "cookies.tracking.flags",
+              "name": "cookies_tracking_flags",
+              "shortDescription": {
+                "text": "Cookie 'tracking': SameSite=None without Secure"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "cookies"
+                ],
+                "security-severity": "5.0"
+              },
+              "fullDescription": {
+                "text": "Secure keeps the cookie off plain HTTP, HttpOnly hides it from JavaScript (limiting XSS damage) and SameSite helps against CSRF."
+              },
+              "help": {
+                "text": "Set-Cookie: tracking=...; Secure; HttpOnly; SameSite=Lax"
+              },
+              "helpUri": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
+            },
+            {
+              "id": "disclosure.versions",
+              "name": "disclosure_versions",
+              "shortDescription": {
+                "text": "Software versions are disclosed in headers"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "disclosure"
+                ],
+                "security-severity": "2.0"
+              },
+              "fullDescription": {
+                "text": "Version banners make it easier to match the server against known vulnerabilities."
+              },
+              "help": {
+                "text": "Hide version numbers (e.g. 'server_tokens off;' in nginx, 'ServerTokens Prod' in Apache, remove X-Powered-By)."
+              },
+              "helpUri": "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server"
+            },
+            {
+              "id": "disclosure.cors.wildcard_credentials",
+              "name": "disclosure_cors_wildcard_credentials",
+              "shortDescription": {
+                "text": "CORS allows any origin together with credentials"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "disclosure"
+                ],
+                "security-severity": "5.0"
+              },
+              "fullDescription": {
+                "text": "This combination is invalid and signals a CORS configuration that may reflect arbitrary origins on other endpoints."
+              },
+              "help": {
+                "text": "Allow-list specific trusted origins instead of '*'."
+              }
+            },
+            {
+              "id": "disclosure.security_txt.missing",
+              "name": "disclosure_security_txt_missing",
+              "shortDescription": {
+                "text": "No security.txt file"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "disclosure"
+                ],
+                "security-severity": "0.0"
+              },
+              "fullDescription": {
+                "text": "security.txt (RFC 9116) tells researchers how to report vulnerabilities to you responsibly."
+              },
+              "help": {
+                "text": "Publish /.well-known/security.txt with at least 'Contact:' and 'Expires:'."
+              },
+              "helpUri": "https://securitytxt.org/"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "transport.https.unavailable",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "HTTPS is not available Fix: Serve the site over HTTPS (free certificates are available from Let's Encrypt)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "high",
+            "confidence": "high",
+            "evidence": "TLS error: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1035)"
+          }
+        },
+        {
+          "ruleId": "transport.http.no_redirect",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "HTTP does not redirect to HTTPS Fix: Answer every plain HTTP request with a 301 redirect to the HTTPS version of the same URL."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "medium",
+            "confidence": "high",
+            "evidence": "http://127.0.0.1:8000/ answered 200 without redirecting"
+          }
+        },
+        {
+          "ruleId": "headers.csp.unsafe",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "CSP allows unsafe script sources Fix: Replace inline scripts with nonces or hashes and remove 'unsafe-eval' and wildcards from script-src."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "medium",
+            "confidence": "high",
+            "evidence": "default-src * 'unsafe-inline' 'unsafe-eval'"
+          }
+        },
+        {
+          "ruleId": "headers.framing.missing",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "No clickjacking protection Fix: Send \"Content-Security-Policy: frame-ancestors 'self'\" or 'X-Frame-Options: DENY'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "medium",
+            "confidence": "high",
+            "evidence": ""
+          }
+        },
+        {
+          "ruleId": "headers.nosniff.missing",
+          "ruleIndex": 4,
+          "level": "note",
+          "message": {
+            "text": "X-Content-Type-Options: nosniff is missing Fix: Send 'X-Content-Type-Options: nosniff'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "low",
+            "confidence": "high",
+            "evidence": ""
+          }
+        },
+        {
+          "ruleId": "headers.referrer.missing",
+          "ruleIndex": 5,
+          "level": "note",
+          "message": {
+            "text": "Referrer-Policy header is missing Fix: Send 'Referrer-Policy: strict-origin-when-cross-origin'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "low",
+            "confidence": "high",
+            "evidence": ""
+          }
+        },
+        {
+          "ruleId": "headers.permissions.missing",
+          "ruleIndex": 6,
+          "level": "note",
+          "message": {
+            "text": "Permissions-Policy header is missing Fix: Disable what you do not use, e.g. 'Permissions-Policy: camera=(), microphone=(), geolocation=()'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "low",
+            "confidence": "high",
+            "evidence": ""
+          }
+        },
+        {
+          "ruleId": "headers.x_xss_protection.enabled",
+          "ruleIndex": 7,
+          "level": "note",
+          "message": {
+            "text": "Deprecated X-XSS-Protection filter is enabled Fix: Send 'X-XSS-Protection: 0' (or drop it) and rely on a strong CSP."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "low",
+            "confidence": "high",
+            "evidence": "1; mode=block"
+          }
+        },
+        {
+          "ruleId": "cookies.PHPSESSID.flags",
+          "ruleIndex": 8,
+          "level": "warning",
+          "message": {
+            "text": "Cookie 'PHPSESSID': missing HttpOnly, missing SameSite Fix: Set-Cookie: PHPSESSID=...; Secure; HttpOnly; SameSite=Lax"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "medium",
+            "confidence": "medium",
+            "evidence": "attributes: path"
+          }
+        },
+        {
+          "ruleId": "cookies.tracking.flags",
+          "ruleIndex": 9,
+          "level": "warning",
+          "message": {
+            "text": "Cookie 'tracking': SameSite=None without Secure Fix: Set-Cookie: tracking=...; Secure; HttpOnly; SameSite=Lax"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "medium",
+            "confidence": "high",
+            "evidence": "attributes: samesite"
+          }
+        },
+        {
+          "ruleId": "disclosure.versions",
+          "ruleIndex": 10,
+          "level": "note",
+          "message": {
+            "text": "Software versions are disclosed in headers Fix: Hide version numbers (e.g. 'server_tokens off;' in nginx, 'ServerTokens Prod' in Apache, remove X-Powered-By)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "low",
+            "confidence": "high",
+            "evidence": "Server: Apache/2.4.41 (Ubuntu); X-Powered-By: PHP/7.4.3"
+          }
+        },
+        {
+          "ruleId": "disclosure.cors.wildcard_credentials",
+          "ruleIndex": 11,
+          "level": "warning",
+          "message": {
+            "text": "CORS allows any origin together with credentials Fix: Allow-list specific trusted origins instead of '*'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "medium",
+            "confidence": "high",
+            "evidence": "Access-Control-Allow-Origin: *; Access-Control-Allow-Credentials: true"
+          }
+        },
+        {
+          "ruleId": "disclosure.security_txt.missing",
+          "ruleIndex": 12,
+          "level": "note",
+          "message": {
+            "text": "No security.txt file Fix: Publish /.well-known/security.txt with at least 'Contact:' and 'Expires:'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:8000/"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "info",
+            "confidence": "high",
+            "evidence": "HTTP 404"
+          }
+        }
+      ],
+      "properties": {
+        "target": "http://127.0.0.1:8000/",
+        "grade": "F",
+        "score": 5
+      }
+    }
+  ]
+}

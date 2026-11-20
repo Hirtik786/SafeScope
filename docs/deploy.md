@@ -19,8 +19,9 @@ Every push to `main` redeploys automatically, and pull requests get preview URLs
 Notes:
 
 - The free (Hobby) plan is for non-commercial use.
-- The rate limiter is in memory, so each serverless instance counts on its own. For heavy
-  traffic, put a shared store such as Vercel KV or Upstash Redis behind `RateLimiter`.
+- The rate limiter and the 4-scan concurrency limit are in memory, so each
+  serverless instance counts on its own. For strict global limits, put a shared
+  store such as Redis behind `RateLimiter`.
 
 ## Any other host (Render, Railway, Fly.io, a VPS)
 
@@ -35,10 +36,15 @@ On a VPS, put nginx or Caddy in front of it to terminate TLS.
 
 ## Security model
 
-- Only `GET` requests are made to scanned sites, with a 6 second timeout per connection.
-- `safescope.netguard.assert_public_url` runs before every connection, including redirects
-  and the TLS handshake. It resolves the host and refuses private, loopback, link-local,
-  carrier-grade NAT, multicast and reserved addresses, plus non-web ports.
-- Known limitation: a DNS record could change between the guard's lookup and the connection
-  (DNS rebinding). The window is milliseconds and the scanner only reads response headers,
-  but pinning the resolved IP is on the roadmap.
+The full description lives in [security-model.md](security-model.md). In short:
+every connection, each redirect hop and the TLS handshake are validated by
+`safescope.netguard` and pinned to the validated address (DNS rebinding safe);
+the service allows web ports only, limits time, concurrency and request rate,
+and never returns resolved addresses in error messages.
+
+### Client IP behind other hosts
+
+`api/scan.py` trusts `X-Forwarded-For` because Vercel overwrites it. On any
+other host, run `safescope serve` without `--trust-proxy` (rate limits then use
+the TCP peer address), or add `--trust-proxy` only behind a proxy that
+overwrites the header.
