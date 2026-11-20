@@ -127,7 +127,7 @@ def handle_scan(query: str, client_ip: str, limiter: RateLimiter = RATE_LIMITER)
         target = normalize_target(raw_target)
         assert_public_url(target)
     except BlockedTargetError as exc:
-        return _error(403, f"target not allowed: {exc}")
+        return _error(403, f"target not allowed: {exc.public_message}")
     except ValueError as exc:
         return _error(400, str(exc))
     except Exception as exc:  # DNS failure etc.
@@ -137,7 +137,9 @@ def handle_scan(query: str, client_ip: str, limiter: RateLimiter = RATE_LIMITER)
     ctx = ScanContext(target, client=client)
     result = Scanner(client=client).scan(target, context=ctx)
     if "error" in result.metadata:
-        return _error(422, f"could not reach {target}: {result.metadata['error']}")
+        if result.metadata.get("blocked"):
+            return _error(403, f"target not allowed: {result.metadata['error_public']}")
+        return _error(422, f"could not reach {target}: {result.metadata['error_public']}")
 
     if fmt == "html":
         return WebResponse(200, "text/html; charset=utf-8", render_html(result).encode(), list(REPORT_SECURITY_HEADERS))

@@ -8,6 +8,7 @@ large page never consumes much memory.
 from __future__ import annotations
 
 import http.client
+import socket
 import ssl
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
@@ -25,6 +26,22 @@ class FetchError(Exception):
 
 class CertificateError(FetchError):
     """The TLS certificate could not be verified (self-signed, expired, wrong host...)."""
+
+
+def pinned_connector(ip: str) -> Callable[..., socket.socket]:
+    """A replacement for ``socket.create_connection`` that ignores the host name
+    it is given and connects to ``ip`` instead (same port, timeout and source)."""
+
+    def create_connection(
+        address: tuple[str, int],
+        timeout: float | None = None,
+        source_address: tuple[str, int] | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> socket.socket:
+        return socket.create_connection((ip, address[1]), timeout, source_address)
+
+    return create_connection
 
 
 @dataclass
@@ -79,15 +96,17 @@ class HttpClient:
         timeout: float = DEFAULT_TIMEOUT,
         verify_tls: bool = True,
         user_agent: str | None = None,
-        url_guard: Callable[[str], None] | None = None,
+        url_guard: Callable[[str], str | None] | None = None,
     ) -> None:
         from safescope._version import __version__
 
         self.timeout = timeout
         self.verify_tls = verify_tls
         self.user_agent = user_agent or USER_AGENT.format(version=__version__)
-        #: called with every URL (including redirect hops) before connecting;
-        #: raise FetchError to refuse it. Used for SSRF protection in the web app.
+        #: Called with every URL (including redirect hops) before connecting.
+        #: It raises FetchError to refuse the URL, or returns the IP address the
+        #: connection must use (DNS pinning, see safescope.netguard), or None to
+        #: let the operating system resolve the name as usual.
         self.url_guard = url_guard
 
     def _ssl_context(self) -> ssl.SSLContext:
@@ -102,8 +121,7 @@ class HttpClient:
         parts = urlsplit(url)
         if parts.scheme not in ("http", "https") or not parts.hostname:
             raise FetchError(f"unsupported URL: {url!r}")
-        if self.url_guard is not None:
-            self.url_guard(url)
+        pinned_ip = self.url_guard(url) if self.url_guard is not None else None
         path = parts.path or "/"
         if parts.query:
             path = f"{path}?{parts.query}"
@@ -115,6 +133,10 @@ class HttpClient:
             )
         else:
             conn = http.client.HTTPConnection(parts.hostname, parts.port, timeout=self.timeout)
+        if pinned_ip is not None:
+            # Connect to the validated address. http.client still uses the host
+            # name for the Host header, TLS SNI and certificate verification.
+            conn._create_connection = pinned_connector(pinned_ip)  # type: ignore[attr-defined]
 
         try:
             conn.request(

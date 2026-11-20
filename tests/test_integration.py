@@ -147,3 +147,64 @@ def test_cli_exit_codes(capsys):
     assert main(["scan", "http://127.0.0.1:9/", "--timeout", "2", "-q"]) == 3
     assert main(["checks"]) == 0
     assert "headers" in capsys.readouterr().out
+
+
+class HostEcho(http.server.BaseHTTPRequestHandler):
+    """Answers with the Host header it received and the TLS SNI it saw."""
+
+    def log_message(self, *args):
+        pass
+
+    def do_GET(self):
+        body = (self.headers.get("Host") or "").encode()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+def test_pinned_connection_keeps_host_header_and_sni(tmp_path):
+    """DNS pinning connects to the validated IP but the server must still see
+    the original host name in the Host header and in TLS SNI."""
+    if not shutil.which("openssl"):
+        pytest.skip("openssl CLI not available")
+    cert, key = tmp_path / "cert.pem", tmp_path / "key.pem"
+    subprocess.run(
+        [
+            "openssl",
+            "req",
+            "-x509",
+            "-newkey",
+            "rsa:2048",
+            "-nodes",
+            "-days",
+            "2",
+            "-subj",
+            "/CN=pinned.test",
+            "-keyout",
+            str(key),
+            "-out",
+            str(cert),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    seen_sni: list[str | None] = []
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), HostEcho)
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_cert_chain(cert, key)
+    ctx.sni_callback = lambda sock, name, _ctx: seen_sni.append(name)
+    server.socket = ctx.wrap_socket(server.socket, server_side=True)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        # "pinned.test" does not exist in DNS: only the pin makes this work.
+        client = HttpClient(timeout=5, verify_tls=False, url_guard=lambda url: "127.0.0.1")
+        resp = client.get(f"https://pinned.test:{port}/")
+        assert resp.status == 200
+        assert resp.text == f"pinned.test:{port}"
+        assert seen_sni == ["pinned.test"]
+    finally:
+        server.shutdown()
+        server.server_close()

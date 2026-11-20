@@ -63,7 +63,13 @@ class Scanner:
                 },
             )
         except FetchError as exc:
-            final_url, metadata = ctx.target, {"error": str(exc)}
+            final_url = ctx.target
+            metadata = {
+                "error": str(exc),
+                # Safe to show to anonymous users of the web API (no resolved addresses).
+                "error_public": getattr(exc, "public_message", str(exc)),
+                "blocked": exc.__class__.__name__ == "BlockedTargetError",
+            }
 
         value, grade = score(findings)
         return ScanResult(

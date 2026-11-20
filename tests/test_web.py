@@ -243,3 +243,29 @@ def test_fetch_error_is_base_of_blocked():
 def test_security_txt_route():
     resp = handle_request("/.well-known/security.txt", "", "x")
     assert resp.status == 200 and b"Contact:" in resp.body and b"Expires:" in resp.body
+
+
+def test_redirect_to_internal_address_is_reported_as_blocked_without_details(monkeypatch):
+    """A public page that redirects into the private network: 403, and the
+    response must not echo the internal address."""
+    from safescope import scanner as scanner_mod
+    from safescope.models import ScanResult
+
+    def fake_scan(self, target, context=None):
+        return ScanResult(
+            target=target,
+            final_url=target,
+            started_at="",
+            duration_seconds=0.0,
+            metadata={
+                "error": "10.0.0.7 resolves to a non-public address (10.0.0.7)",
+                "error_public": "the target resolves to a private, local or otherwise non-public address",
+                "blocked": True,
+            },
+        )
+
+    monkeypatch.setattr(web, "assert_public_url", lambda url: "8.8.8.8")
+    monkeypatch.setattr(scanner_mod.Scanner, "scan", fake_scan)
+    resp = handle_scan("target=redirector.example", "1.2.3.4", limiter=RateLimiter())
+    assert resp.status == 403
+    assert b"10.0.0.7" not in resp.body

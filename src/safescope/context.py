@@ -37,7 +37,7 @@ _MISSING = object()
 class ScanContext:
     target: str
     client: HttpClient = field(default_factory=HttpClient)
-    tls_inspector: Callable[[str, int, float], TLSInfo] = inspect_tls
+    tls_inspector: Callable[..., TLSInfo] = inspect_tls
     _cache: dict[tuple[str, bool], Response | FetchError] = field(default_factory=dict, repr=False)
     _tls: object = field(default=_MISSING, repr=False)
     insecure_fallback: bool = False
@@ -116,8 +116,12 @@ class ScanContext:
 
     def tls_info(self) -> TLSInfo:
         if self._tls is _MISSING:
+            port = self.port if self.scheme == "https" else 443
             if self.client.url_guard is not None:
-                self.client.url_guard(self.https_url())
-            self._tls = self.tls_inspector(self.host, self.port if self.scheme == "https" else 443, self.client.timeout)
+                # Validate and pin: the inspector connects to exactly this address.
+                pinned = self.client.url_guard(self.https_url())
+                self._tls = self.tls_inspector(self.host, port, self.client.timeout, connect_ip=pinned)
+            else:
+                self._tls = self.tls_inspector(self.host, port, self.client.timeout)
         assert isinstance(self._tls, TLSInfo)
         return self._tls

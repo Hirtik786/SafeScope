@@ -48,8 +48,12 @@ def _name_field(name: Any, key: str) -> str:
     return ""
 
 
-def _handshake(host: str, port: int, timeout: float, ctx: ssl.SSLContext) -> ssl.SSLSocket:
-    raw = socket.create_connection((host, port), timeout=timeout)
+def _handshake(
+    host: str, port: int, timeout: float, ctx: ssl.SSLContext, connect_ip: str | None = None
+) -> ssl.SSLSocket:
+    # connect_ip pins the TCP connection to an address validated by the SSRF
+    # guard; server_hostname keeps SNI and certificate checks on the real name.
+    raw = socket.create_connection((connect_ip or host, port), timeout=timeout)
     try:
         return ctx.wrap_socket(raw, server_hostname=host)
     except BaseException:
@@ -57,7 +61,7 @@ def _handshake(host: str, port: int, timeout: float, ctx: ssl.SSLContext) -> ssl
         raise
 
 
-def _probe_legacy(host: str, port: int, timeout: float, info: TLSInfo) -> None:
+def _probe_legacy(host: str, port: int, timeout: float, info: TLSInfo, connect_ip: str | None = None) -> None:
     candidates = [("TLSv1.0", ssl.TLSVersion.TLSv1), ("TLSv1.1", ssl.TLSVersion.TLSv1_1)]
     for label, version in candidates:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -74,7 +78,7 @@ def _probe_legacy(host: str, port: int, timeout: float, info: TLSInfo) -> None:
             info.legacy_probe_possible = False
             continue
         try:
-            with _handshake(host, port, timeout, ctx):
+            with _handshake(host, port, timeout, ctx, connect_ip):
                 info.legacy_protocols.append(label)
         except ssl.SSLError as exc:
             # Only a server alert proves the server refused the version. Anything else
@@ -86,11 +90,11 @@ def _probe_legacy(host: str, port: int, timeout: float, info: TLSInfo) -> None:
             info.legacy_probe_possible = False
 
 
-def inspect_tls(host: str, port: int = 443, timeout: float = 10.0) -> TLSInfo:
+def inspect_tls(host: str, port: int = 443, timeout: float = 10.0, connect_ip: str | None = None) -> TLSInfo:
     info = TLSInfo(host=host, port=port)
     ctx = ssl.create_default_context()
     try:
-        sock = _handshake(host, port, timeout, ctx)
+        sock = _handshake(host, port, timeout, ctx, connect_ip)
         info.verified = True
     except ssl.SSLCertVerificationError as exc:
         info.verify_error = exc.verify_message or str(exc)
@@ -98,14 +102,14 @@ def inspect_tls(host: str, port: int = 443, timeout: float = 10.0) -> TLSInfo:
         unverified.check_hostname = False
         unverified.verify_mode = ssl.CERT_NONE
         try:
-            sock = _handshake(host, port, timeout, unverified)
+            sock = _handshake(host, port, timeout, unverified, connect_ip)
         except (OSError, ssl.SSLError) as exc2:
             info.error = str(exc2)
             return info
     except ssl.SSLError as exc:
         info.error = str(exc) or exc.__class__.__name__
         # A modern handshake failed: maybe the server *only* speaks deprecated TLS.
-        _probe_legacy(host, port, timeout, info)
+        _probe_legacy(host, port, timeout, info, connect_ip)
         return info
     except OSError as exc:
         info.error = str(exc) or exc.__class__.__name__
@@ -131,5 +135,5 @@ def inspect_tls(host: str, port: int = 443, timeout: float = 10.0) -> TLSInfo:
             san: Any = cert.get("subjectAltName", ())
             info.san = [str(v) for k, v in san if k == "DNS"]
 
-    _probe_legacy(host, port, timeout, info)
+    _probe_legacy(host, port, timeout, info, connect_ip)
     return info
