@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The PyPI distribution is named `safescope-scanner` (`safescope` was already taken).
+  The command and the import name stay `safescope`.
+- Releases publish to PyPI through Trusted Publishing (OIDC), with no stored token.
+
 ## [0.2.0] - 2026-11-20
 
 ### Security

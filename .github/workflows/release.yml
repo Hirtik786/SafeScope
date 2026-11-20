@@ -43,14 +43,14 @@ jobs:
           fi
 
   # Trusted Publishing (OIDC): no API token stored anywhere.
-  # Needs a PyPI publisher for: owner Karim-Bazooka, repo SafeScope,
+  # Needs a PyPI publisher (project safescope-scanner) for: owner Karim-Bazooka, repo SafeScope,
   # workflow release.yml, environment pypi.
   publish-pypi:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/safescope
+      url: https://pypi.org/p/safescope-scanner
     permissions:
       id-token: write
     steps:
