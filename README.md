@@ -12,6 +12,8 @@ from your terminal, your CI pipeline, or Python code. Zero dependencies.
 ![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+**🌐 Try it live: [safescope-one.vercel.app](https://safescope-one.vercel.app)**
+
 [Quick start](#-quick-start) · [Web app](#-web-app) · [Checks](#-what-it-checks) · [CI usage](#-use-it-in-ci) · [Contributing](CONTRIBUTING.md) · [العربية](docs/README.ar.md)
 
 <img src="docs/images/html-report.png" alt="SafeScope HTML report" width="720">
@@ -94,7 +96,8 @@ See [`examples/sample-report.html`](examples/sample-report.html) and
 
 ## 🌐 Web app
 
-SafeScope ships with a small web UI and JSON API.
+SafeScope ships with a small web UI and JSON API. A public instance runs at
+**<https://safescope-one.vercel.app>** (it scores A+ when it scans itself).
 
 ```bash
 safescope serve            # http://127.0.0.1:8000
