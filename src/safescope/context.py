@@ -7,6 +7,8 @@ check trivially testable by injecting a fake client.
 
 from __future__ import annotations
 
+import ipaddress
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -22,12 +24,41 @@ def normalize_target(raw: str) -> str:
         raise ValueError("target must not be empty")
     if "://" not in value:
         value = "https://" + value
+    if any(ch.isspace() for ch in value) or any(ord(ch) < 32 for ch in value):
+        raise ValueError("the target must not contain spaces or control characters")
     parts = urlsplit(value)
     if parts.scheme not in ("http", "https"):
         raise ValueError(f"only http:// and https:// targets are supported, got {parts.scheme!r}")
     if not parts.hostname:
         raise ValueError(f"could not find a host name in {raw!r}")
+    if parts.username is not None or parts.password is not None:
+        raise ValueError("URLs with a user name or password are not supported (credentials would leak)")
+    try:
+        parts.port  # noqa: B018  (raises ValueError for ports outside 0-65535)
+    except ValueError as exc:
+        raise ValueError(f"invalid port in {raw!r}") from exc
+    if not _valid_host(parts.hostname):
+        raise ValueError(f"{parts.hostname!r} is not a valid host name")
     return urlunsplit((parts.scheme, parts.netloc, parts.path or "/", parts.query, ""))
+
+
+_HOST_LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
+
+
+def _valid_host(host: str) -> bool:
+    """Accept IP literals and (internationalised) DNS names; reject anything else."""
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        pass
+    try:
+        ascii_host = host.encode("idna").decode("ascii").lower().rstrip(".")
+    except UnicodeError:
+        return False
+    if not ascii_host or len(ascii_host) > 253:
+        return False
+    return all(_HOST_LABEL.match(label) for label in ascii_host.split("."))
 
 
 _MISSING = object()
@@ -120,8 +151,8 @@ class ScanContext:
             if self.client.url_guard is not None:
                 # Validate and pin: the inspector connects to exactly this address.
                 pinned = self.client.url_guard(self.https_url())
-                self._tls = self.tls_inspector(self.host, port, self.client.timeout, connect_ip=pinned)
+                self._tls = self.tls_inspector(self.host, port, self.client.remaining_timeout(), connect_ip=pinned)
             else:
-                self._tls = self.tls_inspector(self.host, port, self.client.timeout)
+                self._tls = self.tls_inspector(self.host, port, self.client.remaining_timeout())
         assert isinstance(self._tls, TLSInfo)
         return self._tls

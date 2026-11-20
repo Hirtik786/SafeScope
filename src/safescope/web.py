@@ -3,9 +3,16 @@
 ``GET /api/scan?target=example.com&format=json`` → JSON result
 ``GET /api/scan?target=example.com&format=html`` → full HTML report
 
-Because this is reachable by anyone on the internet it is hardened:
-SSRF guard on every connection, short timeouts, per-IP rate limiting and
-strict security headers on every response.
+Because this is reachable by anyone on the internet it is hardened; every
+limit below is documented in docs/security-model.md:
+
+* SSRF guard with DNS pinning on every connection (safescope.netguard)
+* WEB_TIMEOUT per network operation and SCAN_BUDGET for a whole scan
+* MAX_CONCURRENT_SCANS per instance (503 when busy)
+* per-client rate limiting, with the client IP taken from proxy headers only
+  when the deployment says the proxy overwrites them (see client_ip)
+* strict security headers on every response, no CORS headers (the API is not
+  meant to be called from other origins' scripts)
 """
 
 from __future__ import annotations
@@ -15,6 +22,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass, field
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -25,7 +33,10 @@ from safescope.reporters import render_html, render_json
 from safescope.scanner import Scanner
 
 WEB_TIMEOUT = 6.0
+SCAN_BUDGET = 25.0
 MAX_TARGET_LENGTH = 2048
+MAX_CONCURRENT_SCANS = 4
+_SCAN_SLOTS = threading.BoundedSemaphore(MAX_CONCURRENT_SCANS)
 
 API_SECURITY_HEADERS = [
     ("X-Content-Type-Options", "nosniff"),
@@ -97,6 +108,26 @@ class RateLimiter:
 RATE_LIMITER = RateLimiter()
 
 
+def client_ip(
+    header: Callable[[str], str | None],
+    peer: str,
+    trust_proxy_headers: bool,
+) -> str:
+    """Return the IP address used for rate limiting.
+
+    ``X-Forwarded-For`` is written by the client and trivially spoofed, so it is
+    used only when ``trust_proxy_headers`` is set by the *deployment*, meaning a
+    proxy in front of the app overwrites it. Vercel does (see api/scan.py);
+    ``safescope serve`` does not trust it unless started with ``--trust-proxy``.
+    """
+    if trust_proxy_headers:
+        forwarded = header("x-forwarded-for") or header("x-real-ip") or ""
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first
+    return peer
+
+
 @dataclass
 class WebResponse:
     status: int
@@ -105,9 +136,12 @@ class WebResponse:
     headers: list[tuple[str, str]] = field(default_factory=list)
 
 
-def _error(status: int, message: str) -> WebResponse:
+def _error(status: int, message: str, retry_after: int | None = None) -> WebResponse:
     body = json.dumps({"error": message}).encode()
-    return WebResponse(status, "application/json; charset=utf-8", body, list(API_SECURITY_HEADERS))
+    headers = list(API_SECURITY_HEADERS)
+    if retry_after is not None:
+        headers.append(("Retry-After", str(retry_after)))
+    return WebResponse(status, "application/json; charset=utf-8", body, headers)
 
 
 def handle_scan(query: str, client_ip: str, limiter: RateLimiter = RATE_LIMITER) -> WebResponse:
@@ -121,7 +155,7 @@ def handle_scan(query: str, client_ip: str, limiter: RateLimiter = RATE_LIMITER)
     if fmt not in ("json", "html"):
         return _error(400, "format must be 'json' or 'html'")
     if not limiter.allow(client_ip):
-        return _error(429, "too many scans, please wait a minute")
+        return _error(429, "too many scans, please wait a minute", retry_after=60)
 
     try:
         target = normalize_target(raw_target)
@@ -133,9 +167,14 @@ def handle_scan(query: str, client_ip: str, limiter: RateLimiter = RATE_LIMITER)
     except Exception as exc:  # DNS failure etc.
         return _error(422, str(exc))
 
-    client = HttpClient(timeout=WEB_TIMEOUT, url_guard=assert_public_url)
-    ctx = ScanContext(target, client=client)
-    result = Scanner(client=client).scan(target, context=ctx)
+    if not _SCAN_SLOTS.acquire(blocking=False):
+        return _error(503, "the scanner is busy, please try again in a few seconds", retry_after=5)
+    try:
+        client = HttpClient(timeout=WEB_TIMEOUT, url_guard=assert_public_url, budget=SCAN_BUDGET)
+        ctx = ScanContext(target, client=client)
+        result = Scanner(client=client).scan(target, context=ctx)
+    finally:
+        _SCAN_SLOTS.release()
     if "error" in result.metadata:
         if result.metadata.get("blocked"):
             return _error(403, f"target not allowed: {result.metadata['error_public']}")
@@ -171,7 +210,7 @@ def handle_request(path: str, query: str, client_ip: str) -> WebResponse:
     return _error(404, "not found")
 
 
-def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+def serve(host: str = "127.0.0.1", port: int = 8000, trust_proxy: bool = False) -> None:
     """Run the web UI + API locally (``safescope serve``)."""
     import http.server
     from urllib.parse import urlsplit
@@ -182,7 +221,8 @@ def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
 
         def do_GET(self) -> None:
             parts = urlsplit(self.path)
-            resp = handle_request(parts.path, parts.query, self.client_address[0])
+            ip = client_ip(self.headers.get, self.client_address[0], trust_proxy)
+            resp = handle_request(parts.path, parts.query, ip)
             self.send_response(resp.status)
             self.send_header("Content-Type", resp.content_type)
             for name, value in resp.headers:

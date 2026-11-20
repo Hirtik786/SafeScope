@@ -78,6 +78,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve = sub.add_parser("serve", help="run the web UI and JSON API locally")
     serve.add_argument("--host", default="127.0.0.1", help="interface to bind (default: 127.0.0.1)")
     serve.add_argument("--port", type=int, default=8000, help="port (default: 8000)")
+    serve.add_argument(
+        "--trust-proxy",
+        action="store_true",
+        help="use X-Forwarded-For for rate limiting; only behind a proxy that overwrites it",
+    )
     return parser
 
 
@@ -148,7 +153,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "serve":
         from safescope.web import serve
 
-        serve(args.host, args.port)
+        serve(args.host, args.port, trust_proxy=args.trust_proxy)
         return EXIT_OK
     parser.print_help()
     return EXIT_USAGE

@@ -14,7 +14,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from safescope.web import handle_request  # noqa: E402
+from safescope.web import client_ip, handle_request  # noqa: E402
 
 
 class handler(BaseHTTPRequestHandler):  # noqa: N801  (name required by Vercel)
@@ -25,10 +25,11 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (name required by Vercel)
         path = "/" + route.lstrip("/") if route is not None else parts.path
         query = urlencode([(k, v) for k, v in params if k != "path"])
 
-        forwarded = self.headers.get("x-real-ip") or self.headers.get("x-forwarded-for") or ""
-        client_ip = forwarded.split(",")[0].strip() or self.client_address[0]
+        # Vercel overwrites X-Forwarded-For with the real client address (it does
+        # not forward values sent by the client), so it is safe to trust here.
+        ip = client_ip(self.headers.get, self.client_address[0], trust_proxy_headers=True)
 
-        resp = handle_request(path, query, client_ip)
+        resp = handle_request(path, query, ip)
         self.send_response(resp.status)
         self.send_header("Content-Type", resp.content_type)
         for name, value in resp.headers:

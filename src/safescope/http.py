@@ -10,6 +10,7 @@ from __future__ import annotations
 import http.client
 import socket
 import ssl
+import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlsplit
@@ -97,6 +98,7 @@ class HttpClient:
         verify_tls: bool = True,
         user_agent: str | None = None,
         url_guard: Callable[[str], str | None] | None = None,
+        budget: float | None = None,
     ) -> None:
         from safescope._version import __version__
 
@@ -108,6 +110,19 @@ class HttpClient:
         #: connection must use (DNS pinning, see safescope.netguard), or None to
         #: let the operating system resolve the name as usual.
         self.url_guard = url_guard
+        #: Optional total time budget (seconds) shared by every request this
+        #: client makes, so one scan can never run longer than this.
+        self.budget = budget
+        self._deadline = time.monotonic() + budget if budget is not None else None
+
+    def remaining_timeout(self) -> float:
+        """The timeout for the next network operation, within the budget."""
+        if self._deadline is None:
+            return self.timeout
+        remaining = self._deadline - time.monotonic()
+        if remaining <= 0:
+            raise FetchError(f"scan time budget of {self.budget:g}s exceeded")
+        return min(self.timeout, remaining)
 
     def _ssl_context(self) -> ssl.SSLContext:
         if self.verify_tls:
@@ -121,6 +136,7 @@ class HttpClient:
         parts = urlsplit(url)
         if parts.scheme not in ("http", "https") or not parts.hostname:
             raise FetchError(f"unsupported URL: {url!r}")
+        timeout = self.remaining_timeout()
         pinned_ip = self.url_guard(url) if self.url_guard is not None else None
         path = parts.path or "/"
         if parts.query:
@@ -129,10 +145,10 @@ class HttpClient:
         conn: http.client.HTTPConnection
         if parts.scheme == "https":
             conn = http.client.HTTPSConnection(
-                parts.hostname, parts.port, timeout=self.timeout, context=self._ssl_context()
+                parts.hostname, parts.port, timeout=timeout, context=self._ssl_context()
             )
         else:
-            conn = http.client.HTTPConnection(parts.hostname, parts.port, timeout=self.timeout)
+            conn = http.client.HTTPConnection(parts.hostname, parts.port, timeout=timeout)
         if pinned_ip is not None:
             # Connect to the validated address. http.client still uses the host
             # name for the Host header, TLS SNI and certificate verification.
@@ -162,7 +178,7 @@ class HttpClient:
         except ssl.SSLError as exc:
             raise FetchError(f"TLS error: {exc}") from exc
         except TimeoutError as exc:
-            raise FetchError(f"timed out after {self.timeout:g}s") from exc
+            raise FetchError(f"timed out after {timeout:g}s") from exc
         except (OSError, http.client.HTTPException) as exc:
             raise FetchError(str(exc) or exc.__class__.__name__) from exc
         finally:
