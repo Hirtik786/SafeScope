@@ -9,6 +9,7 @@ ICON = {
     Status.FAIL: "❌",
     Status.WARN: "⚠️",
     Status.INFO: "ℹ️",
+    Status.SKIPPED: "⏭️",
     Status.ERROR: "💥",
 }
 
@@ -36,4 +37,5 @@ def render_markdown(result: ScanResult) -> str:
         sev = f.severity.label if f.is_problem else ""
         rec = f.recommendation if f.is_problem else ""
         out.append(f"| {ICON[f.status]} | {f.check_id} | {_cell(f.title)} | {sev} | {_cell(rec)} |")
+    out += ["", "_The grade summarises passive checks; it is not proof that a site is secure._"]
     return "\n".join(out) + "\n"

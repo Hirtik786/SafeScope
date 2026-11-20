@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from safescope.checks.base import Check
 from safescope.context import ScanContext
 from safescope.http import FetchError, Response
-from safescope.models import Finding, Severity, Status
+from safescope.models import Confidence, Finding, Severity, Status
 
 SENSITIVE_NAME = re.compile(r"sess|sid|auth|token|jwt|login|csrf|xsrf|remember", re.IGNORECASE)
 MDN_COOKIES = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
@@ -97,6 +97,9 @@ class CookiesCheck(Check):
                     recommendation=f"Set-Cookie: {c.name}=...; Secure; HttpOnly; SameSite=Lax",
                     evidence="attributes: " + (", ".join(sorted(c.attributes)) or "(none)"),
                     references=[MDN_COOKIES],
+                    # HttpOnly/Secure severity depends on guessing from the name whether
+                    # this is a session cookie: a heuristic, so medium confidence.
+                    confidence=Confidence.MEDIUM if c.looks_sensitive else Confidence.HIGH,
                 )
             )
         return out

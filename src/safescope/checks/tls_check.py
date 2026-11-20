@@ -45,9 +45,9 @@ class TLSCheck(Check):
             return [
                 self.finding(
                     "handshake",
-                    "TLS handshake failed",
-                    Status.INFO,
-                    description="Could not open a TLS connection; see the HTTPS check for impact.",
+                    "TLS not tested: no TLS connection could be opened",
+                    Status.SKIPPED,
+                    description="See the HTTPS check for the impact of HTTPS being unavailable.",
                     evidence=info.error,
                 )
             ]
@@ -156,12 +156,11 @@ class TLSCheck(Check):
             out.append(self.passed("protocol.no_legacy", "TLS 1.0 and 1.1 are disabled"))
         else:
             out.append(
-                self.finding(
+                self.skipped(
                     "protocol.legacy_untested",
                     "Legacy TLS versions not tested",
-                    Status.INFO,
-                    description="The local OpenSSL build cannot offer TLS 1.0/1.1, so "
-                    "support for them could not be checked.",
+                    "The local OpenSSL build cannot offer TLS 1.0/1.1, or the probe did not get a "
+                    "clear answer from the server, so support for them could not be checked.",
                 )
             )
         return out

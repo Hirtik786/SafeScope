@@ -144,9 +144,7 @@ class HttpClient:
 
         conn: http.client.HTTPConnection
         if parts.scheme == "https":
-            conn = http.client.HTTPSConnection(
-                parts.hostname, parts.port, timeout=timeout, context=self._ssl_context()
-            )
+            conn = http.client.HTTPSConnection(parts.hostname, parts.port, timeout=timeout, context=self._ssl_context())
         else:
             conn = http.client.HTTPConnection(parts.hostname, parts.port, timeout=timeout)
         if pinned_ip is not None:

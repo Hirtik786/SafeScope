@@ -36,7 +36,7 @@ color:#fff;cursor:pointer}
 .row{display:flex;gap:10px;align-items:center}
 .badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;color:#fff;text-transform:uppercase;flex:none}
 .st-pass{background:var(--pass)}.st-fail{background:var(--fail)}.st-warn{background:var(--warn)}
-.st-info{background:var(--info)}.st-error{background:var(--error)}
+.st-info{background:var(--info)}.st-error{background:var(--error)}.st-skipped{background:#64748b}
 .sev{margin-left:auto;font-size:12px;font-weight:600}
 .sev-critical{color:var(--critical)}.sev-high{color:var(--high)}.sev-medium{color:var(--medium)}.sev-low{color:var(--low)}
 .detail{margin:6px 0 0 0;font-size:14px;color:var(--muted)}

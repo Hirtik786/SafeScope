@@ -7,6 +7,10 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 
+#: Version of the JSON report layout. Bump it on incompatible changes.
+SCHEMA_VERSION = 1
+
+
 class Severity(enum.IntEnum):
     """How much a finding matters. Ordered so that comparisons work (HIGH > LOW)."""
 
@@ -30,13 +34,31 @@ class Severity(enum.IntEnum):
 
 
 class Status(str, enum.Enum):
-    """Outcome of a single test inside a check."""
+    """Outcome of a single test inside a check.
+
+    ``SKIPPED`` means the test could not be performed (for example the local
+    OpenSSL cannot offer TLS 1.0). It is never counted as a pass: a scanner
+    must not claim something is fine when it did not look.
+    """
 
     PASS = "pass"
     FAIL = "fail"
     WARN = "warn"
     INFO = "info"
+    SKIPPED = "skipped"
     ERROR = "error"
+
+
+class Confidence(str, enum.Enum):
+    """How sure SafeScope is about a finding (independent of its severity).
+
+    HIGH: read directly from the response (a header is missing).
+    MEDIUM: relies on a heuristic (a cookie *looks* like a session cookie).
+    """
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 @dataclass(frozen=True)
@@ -57,6 +79,7 @@ class Finding:
     recommendation: str = ""
     evidence: str = ""
     references: tuple[str, ...] = ()
+    confidence: Confidence = Confidence.HIGH
 
     @property
     def is_problem(self) -> bool:
@@ -67,6 +90,7 @@ class Finding:
         data["status"] = self.status.value
         data["severity"] = self.severity.label
         data["references"] = list(self.references)
+        data["confidence"] = self.confidence.value
         return data
 
 
@@ -100,6 +124,7 @@ class ScanResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema_version": SCHEMA_VERSION,
             "tool": {"name": "SafeScope", "version": self.tool_version},
             "target": self.target,
             "final_url": self.final_url,

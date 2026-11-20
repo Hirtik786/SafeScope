@@ -81,7 +81,7 @@
     if (isProblem(f)) {
       if (f.description) item.appendChild(el("p", "detail", f.description));
       if (f.recommendation) item.appendChild(el("div", "fix", "Fix: " + f.recommendation));
-    } else if (f.status === "error" && f.description) {
+    } else if ((f.status === "error" || f.status === "skipped") && f.description) {
       item.appendChild(el("p", "detail", f.description));
     }
     return item;

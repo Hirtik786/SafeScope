@@ -59,18 +59,25 @@ def test_legacy_protocols():
     f = analyze(info(legacy_protocols=["TLSv1.0"]))
     assert f["tls.protocol.legacy"].status is Status.WARN
     f = analyze(info(legacy_probe_possible=False))
-    assert f["tls.protocol.legacy_untested"].status is Status.INFO
+    assert f["tls.protocol.legacy_untested"].status is Status.SKIPPED
 
 
 def test_outdated_negotiated_protocol():
     assert "tls.protocol.outdated" in analyze(info(protocol="TLSv1"))
 
 
-def test_handshake_failure_is_informational():
+def test_handshake_failure_is_reported_as_not_tested():
     f = analyze(TLSInfo(host="x", port=443, error="refused"))
-    assert f["tls.handshake"].status is Status.INFO
+    assert f["tls.handshake"].status is Status.SKIPPED
+    assert not f["tls.handshake"].is_problem  # the transport check reports the impact
 
 
 def test_server_that_only_speaks_legacy_tls():
     f = analyze(TLSInfo(host="x", port=443, error="unsupported protocol", legacy_protocols=["TLSv1.0"]))
     assert f["tls.protocol.legacy_only"].severity is Severity.HIGH
+
+
+def test_nothing_untested_is_ever_reported_as_pass():
+    """If the probe could not run, no PASS about legacy protocols may appear."""
+    f = analyze(info(legacy_probe_possible=False))
+    assert "tls.protocol.no_legacy" not in f

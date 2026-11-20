@@ -25,6 +25,7 @@ STATUS_STYLE = {
     Status.FAIL: ("FAIL", "red"),
     Status.WARN: ("WARN", "yellow"),
     Status.INFO: ("INFO", "blue"),
+    Status.SKIPPED: ("SKIP", "cyan"),
     Status.ERROR: ("ERR ", "magenta"),
 }
 SEVERITY_COLOR = {
@@ -88,7 +89,7 @@ def render_console(result: ScanResult, color: bool | None = None, verbose: bool 
             if f.is_problem and f.severity > Severity.INFO:
                 sev = " " + paint(f"[{f.severity.label}]", SEVERITY_COLOR[f.severity])
             lines.append(f"  {paint(label, col, bold=True)} {f.title}{sev}")
-            show_details = f.is_problem or f.status is Status.ERROR or verbose
+            show_details = f.is_problem or f.status in (Status.ERROR, Status.SKIPPED) or verbose
             if show_details:
                 details = [(f.evidence, "· ", True)]
                 if f.is_problem:
@@ -99,7 +100,7 @@ def render_console(result: ScanResult, color: bool | None = None, verbose: bool 
                     wrapped = textwrap.wrap(text, width=width - 9) or [""]
                     lines.append(paint("       " + marker + wrapped[0], dim=dim))
                     lines.extend(paint("         " + w, dim=dim) for w in wrapped[1:])
-                if f.status is Status.ERROR and f.description:
+                if f.status in (Status.ERROR, Status.SKIPPED) and f.description:
                     lines.append(paint("       · " + f.description, dim=True))
         lines.append("")
 
@@ -109,5 +110,6 @@ def render_console(result: ScanResult, color: bool | None = None, verbose: bool 
         for name, n in counts.items()
     )
     lines.append("Issues : " + summary)
+    lines.append(paint("The grade summarises passive checks; it is not proof that a site is secure.", dim=True))
     lines.append(paint("Only scan sites you own or are authorised to test.", dim=True))
     return "\n".join(lines) + "\n"

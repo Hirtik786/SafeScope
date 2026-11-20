@@ -10,7 +10,9 @@ import abc
 from typing import ClassVar
 
 from safescope.context import ScanContext
-from safescope.models import Finding, Severity, Status
+from safescope.models import Confidence, Finding, Severity, Status
+
+MAX_EVIDENCE = 300
 
 
 class Check(abc.ABC):
@@ -38,7 +40,10 @@ class Check(abc.ABC):
         recommendation: str = "",
         evidence: str = "",
         references: tuple[str, ...] | list[str] = (),
+        confidence: Confidence = Confidence.HIGH,
     ) -> Finding:
+        if len(evidence) > MAX_EVIDENCE:  # keep reports short and avoid echoing large server output
+            evidence = evidence[: MAX_EVIDENCE - 1] + "…"
         return Finding(
             id=f"{self.id}.{suffix}",
             check_id=self.id,
@@ -49,10 +54,15 @@ class Check(abc.ABC):
             recommendation=recommendation,
             evidence=evidence,
             references=tuple(references),
+            confidence=confidence,
         )
 
     def passed(self, suffix: str, title: str, evidence: str = "") -> Finding:
         return self.finding(suffix, title, Status.PASS, evidence=evidence)
+
+    def skipped(self, suffix: str, title: str, reason: str) -> Finding:
+        """The test could not be performed. Never reported as a pass."""
+        return self.finding(suffix, title, Status.SKIPPED, description=reason)
 
     def error(self, suffix: str, title: str, message: str) -> Finding:
         return self.finding(suffix, title, Status.ERROR, description=message)

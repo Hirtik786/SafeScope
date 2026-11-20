@@ -147,3 +147,28 @@ def test_untrusted_certificate_does_not_abort_scan(make_ctx):
     ctx._insecure_client = lambda: Insecure()  # type: ignore[method-assign]
     assert ctx.main_response().status == 200
     assert ctx.insecure_fallback and calls == [url]
+
+
+def test_json_has_schema_version_and_confidence(make_ctx):
+    data = json.loads(render_json(sample_result(make_ctx)))
+    assert data["schema_version"] == 1
+    cookie = next(f for f in data["findings"] if f["id"] == "cookies.PHPSESSID.flags")
+    assert cookie["confidence"] == "medium"  # name-based heuristic
+    assert all(f["confidence"] in ("high", "medium", "low") for f in data["findings"])
+
+
+def test_long_evidence_is_truncated():
+    from safescope.checks.base import MAX_EVIDENCE
+    from safescope.checks.headers import HeadersCheck
+    from safescope.http import Headers
+
+    findings = HeadersCheck().analyze(Headers.from_pairs([("Content-Security-Policy", "script-src * " + "x" * 5000)]))
+    unsafe = next(f for f in findings if f.id == "headers.csp.unsafe")
+    assert len(unsafe.evidence) == MAX_EVIDENCE
+    assert unsafe.evidence.endswith("…")
+
+
+def test_reports_state_that_a_grade_is_not_proof_of_security(make_ctx):
+    result = sample_result(make_ctx)
+    for text in (render_console(result, color=False), render_markdown(result), render_html(result)):
+        assert "not proof" in text
