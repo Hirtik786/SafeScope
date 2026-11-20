@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-20
+
 ### Changed
 - The PyPI distribution is named `safescope-scanner` (`safescope` was already taken).
   The command and the import name stay `safescope`.
@@ -76,6 +78,7 @@ All notable changes to this project are documented here. The format follows
 - Scans continue when the certificate is untrusted (reported by the `tls` check).
 - Real-world test suite against badssl.com and major sites (`pytest -m network --run-network`).
 
-[Unreleased]: https://github.com/Karim-Bazooka/SafeScope/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Karim-Bazooka/SafeScope/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Karim-Bazooka/SafeScope/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Karim-Bazooka/SafeScope/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Karim-Bazooka/SafeScope/releases/tag/v0.1.0
