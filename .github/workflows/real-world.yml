@@ -17,13 +17,14 @@ jobs:
   network-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev]"
       - name: Real-world test suite
-        run: pytest -m network --run-network -v
+        # Real websites occasionally time out; one rerun of failed tests only.
+        run: pytest -m network --run-network -v || pytest -m network --run-network -v --last-failed
 
   cli-scans:
     runs-on: ubuntu-latest
@@ -37,23 +38,26 @@ jobs:
           - self-signed.badssl.com
           - hsts.badssl.com
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python -m pip install .
       - name: Scan ${{ matrix.target }}
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          safescope scan "${{ matrix.target }}" --no-color
-          safescope scan "${{ matrix.target }}" -f markdown >> "$GITHUB_STEP_SUMMARY"
-          safescope scan "${{ matrix.target }}" -f json -o result.json -q
+          # Real websites occasionally time out; retry once before failing.
+          safescope scan "$TARGET" --no-color || { sleep 10; safescope scan "$TARGET" --no-color; }
+          safescope scan "$TARGET" -f markdown >> "$GITHUB_STEP_SUMMARY"
+          safescope scan "$TARGET" -f json -o result.json -q || { sleep 10; safescope scan "$TARGET" -f json -o result.json -q; }
           python -c "import json; d=json.load(open('result.json')); errs=[f for f in d['findings'] if f['status']=='error']; assert not errs, errs; print('grade', d['grade'])"
 
   web-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python -m pip install .
