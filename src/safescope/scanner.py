@@ -47,19 +47,21 @@ class Scanner:
                         status=Status.ERROR,
                         severity=Severity.INFO,
                         description=f"{exc.__class__.__name__}: {exc}",
-                        recommendation="Please report this at "
-                        "https://github.com/Karim-Bazooka/SafeScope/issues",
+                        recommendation="Please report this at https://github.com/Karim-Bazooka/SafeScope/issues",
                     )
                 )
 
         try:
             final = ctx.main_response()
-            final_url, metadata = final.url, {
-                "status": final.status,
-                "redirects": [{"status": s, "url": u} for s, u in final.redirect_chain],
-                "server": final.headers.get("Server") or "",
-                "certificate_verified": not ctx.insecure_fallback,
-            }
+            final_url, metadata = (
+                final.url,
+                {
+                    "status": final.status,
+                    "redirects": [{"status": s, "url": u} for s, u in final.redirect_chain],
+                    "server": final.headers.get("Server") or "",
+                    "certificate_verified": not ctx.insecure_fallback,
+                },
+            )
         except FetchError as exc:
             final_url, metadata = ctx.target, {"error": str(exc)}
 

@@ -24,9 +24,7 @@ def test_ideal_setup(make_ctx):
             "https://example.com/",
             headers={"Strict-Transport-Security": "max-age=63072000; includeSubDomains"},
         ),
-        "http://example.com/": make_response(
-            "https://example.com/", chain=[(301, "http://example.com/")]
-        ),
+        "http://example.com/": make_response("https://example.com/", chain=[(301, "http://example.com/")]),
     }
     results = run(make_ctx, routes)
     assert set(results) == {

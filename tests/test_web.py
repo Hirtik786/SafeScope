@@ -56,8 +56,10 @@ def test_guard_checks_every_resolved_address(monkeypatch):
     import socket
 
     def fake_getaddrinfo(host, port, type=0):
-        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", port)),
-                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.1", port))]
+        return [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", port)),
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.1", port)),
+        ]
 
     monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
     with pytest.raises(BlockedTargetError, match="10.0.0.1"):
@@ -122,8 +124,13 @@ def body(resp):
 
 @pytest.mark.parametrize(
     "query, status",
-    [("", 400), ("target=", 400), ("target=example.com&format=xml", 400),
-     ("target=" + "a" * 3000, 400), ("target=ftp://x.com", 400)],
+    [
+        ("", 400),
+        ("target=", 400),
+        ("target=example.com&format=xml", 400),
+        ("target=" + "a" * 3000, 400),
+        ("target=ftp://x.com", 400),
+    ],
 )
 def test_scan_validation_errors(query, status):
     resp = handle_scan(query, "1.2.3.4", limiter=RateLimiter())

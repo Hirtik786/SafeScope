@@ -17,7 +17,7 @@ from safescope.models import Finding, Severity, Status
 
 
 class CharsetCheck(Check):
-    id = "charset"                      # stable, used by --only / --skip
+    id = "charset"  # stable, used by --only / --skip
     name = "Character set"
     description = "Ensures HTML responses declare their character encoding."
 

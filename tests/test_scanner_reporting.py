@@ -22,9 +22,11 @@ def F(sev: Severity, status: Status = Status.FAIL) -> Finding:
 
 @pytest.mark.parametrize(
     "raw, expected",
-    [("example.com", "https://example.com/"),
-     ("  http://Example.com:8080/a?b=1#frag ", "http://Example.com:8080/a?b=1"),
-     ("https://example.com/path", "https://example.com/path")],
+    [
+        ("example.com", "https://example.com/"),
+        ("  http://Example.com:8080/a?b=1#frag ", "http://Example.com:8080/a?b=1"),
+        ("https://example.com/path", "https://example.com/path"),
+    ],
 )
 def test_normalize_target(raw, expected):
     assert normalize_target(raw) == expected
@@ -102,8 +104,7 @@ def sample_result(make_ctx):
     url = "https://example.com/"
     ctx = make_ctx(
         "example.com",
-        {url: make_response(url, headers={"Server": "<script>alert(1)</script>/1.0",
-                                          "Set-Cookie": "PHPSESSID=x"})},
+        {url: make_response(url, headers={"Server": "<script>alert(1)</script>/1.0", "Set-Cookie": "PHPSESSID=x"})},
     )
     return Scanner().scan(ctx.target, context=ctx)
 

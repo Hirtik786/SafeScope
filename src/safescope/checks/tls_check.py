@@ -81,36 +81,62 @@ class TLSCheck(Check):
         if days is not None:
             if days < 0:
                 out.append(
-                    self.finding("certificate.expired", "Certificate has expired", Status.FAIL,
-                                 Severity.CRITICAL, evidence=f"expired {-days} day(s) ago",
-                                 recommendation="Renew the certificate immediately.")
+                    self.finding(
+                        "certificate.expired",
+                        "Certificate has expired",
+                        Status.FAIL,
+                        Severity.CRITICAL,
+                        evidence=f"expired {-days} day(s) ago",
+                        recommendation="Renew the certificate immediately.",
+                    )
                 )
             elif days <= EXPIRY_CRITICAL_DAYS:
                 out.append(
-                    self.finding("certificate.expiring", f"Certificate expires in {days} day(s)",
-                                 Status.FAIL, Severity.HIGH,
-                                 recommendation="Renew now and automate renewal (e.g. certbot).",
-                                 evidence=f"notAfter={info.not_after:%Y-%m-%d}")
+                    self.finding(
+                        "certificate.expiring",
+                        f"Certificate expires in {days} day(s)",
+                        Status.FAIL,
+                        Severity.HIGH,
+                        recommendation="Renew now and automate renewal (e.g. certbot).",
+                        evidence=f"notAfter={info.not_after:%Y-%m-%d}",
+                    )
                 )
             elif days <= EXPIRY_WARN_DAYS:
                 out.append(
-                    self.finding("certificate.expiring", f"Certificate expires in {days} day(s)",
-                                 Status.WARN, Severity.LOW,
-                                 recommendation="Make sure automatic renewal is working.",
-                                 evidence=f"notAfter={info.not_after:%Y-%m-%d}")
+                    self.finding(
+                        "certificate.expiring",
+                        f"Certificate expires in {days} day(s)",
+                        Status.WARN,
+                        Severity.LOW,
+                        recommendation="Make sure automatic renewal is working.",
+                        evidence=f"notAfter={info.not_after:%Y-%m-%d}",
+                    )
                 )
             else:
-                out.append(self.passed("certificate.expiry", f"Certificate valid for {days} more days",
-                                       f"notAfter={info.not_after:%Y-%m-%d}"))
+                out.append(
+                    self.passed(
+                        "certificate.expiry",
+                        f"Certificate valid for {days} more days",
+                        f"notAfter={info.not_after:%Y-%m-%d}",
+                    )
+                )
 
         if info.protocol in ("TLSv1.3", "TLSv1.2"):
-            out.append(self.passed("protocol.modern", f"Negotiated {info.protocol}",
-                                   f"{info.cipher} ({info.cipher_bits} bits)"))
+            out.append(
+                self.passed(
+                    "protocol.modern", f"Negotiated {info.protocol}", f"{info.cipher} ({info.cipher_bits} bits)"
+                )
+            )
         elif info.protocol:
             out.append(
-                self.finding("protocol.outdated", f"Server negotiated outdated {info.protocol}",
-                             Status.FAIL, Severity.HIGH,
-                             recommendation="Enable TLS 1.2 and TLS 1.3.", references=[RFC_8996])
+                self.finding(
+                    "protocol.outdated",
+                    f"Server negotiated outdated {info.protocol}",
+                    Status.FAIL,
+                    Severity.HIGH,
+                    recommendation="Enable TLS 1.2 and TLS 1.3.",
+                    references=[RFC_8996],
+                )
             )
 
         if info.legacy_protocols:
@@ -130,9 +156,12 @@ class TLSCheck(Check):
             out.append(self.passed("protocol.no_legacy", "TLS 1.0 and 1.1 are disabled"))
         else:
             out.append(
-                self.finding("protocol.legacy_untested", "Legacy TLS versions not tested",
-                             Status.INFO,
-                             description="The local OpenSSL build cannot offer TLS 1.0/1.1, so "
-                             "support for them could not be checked.")
+                self.finding(
+                    "protocol.legacy_untested",
+                    "Legacy TLS versions not tested",
+                    Status.INFO,
+                    description="The local OpenSSL build cannot offer TLS 1.0/1.1, so "
+                    "support for them could not be checked.",
+                )
             )
         return out

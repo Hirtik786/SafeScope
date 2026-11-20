@@ -50,8 +50,7 @@ class TransportCheck(Check):
                     Severity.HIGH,
                     description="The site could not be loaded over HTTPS, so all traffic can be read "
                     "or modified by anyone on the network path.",
-                    recommendation="Serve the site over HTTPS (free certificates are available from "
-                    "Let's Encrypt).",
+                    recommendation="Serve the site over HTTPS (free certificates are available from Let's Encrypt).",
                     evidence=str(exc),
                     references=[OWASP_TLS],
                 )
@@ -103,8 +102,7 @@ class TransportCheck(Check):
                         "HTTP does not redirect to HTTPS",
                         Status.FAIL,
                         Severity.MEDIUM,
-                        description="Visitors who type the address without https:// stay on an "
-                        "unencrypted connection.",
+                        description="Visitors who type the address without https:// stay on an unencrypted connection.",
                         recommendation="Answer every plain HTTP request with a 301 redirect to the "
                         "HTTPS version of the same URL.",
                         evidence=f"{ctx.http_url()} answered {http_resp.status} without redirecting",

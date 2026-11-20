@@ -118,7 +118,6 @@ class ScanContext:
         if self._tls is _MISSING:
             if self.client.url_guard is not None:
                 self.client.url_guard(self.https_url())
-            self._tls = self.tls_inspector(self.host, self.port if self.scheme == "https" else 443,
-                                           self.client.timeout)
+            self._tls = self.tls_inspector(self.host, self.port if self.scheme == "https" else 443, self.client.timeout)
         assert isinstance(self._tls, TLSInfo)
         return self._tls

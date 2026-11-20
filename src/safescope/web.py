@@ -140,10 +140,8 @@ def handle_scan(query: str, client_ip: str, limiter: RateLimiter = RATE_LIMITER)
         return _error(422, f"could not reach {target}: {result.metadata['error']}")
 
     if fmt == "html":
-        return WebResponse(200, "text/html; charset=utf-8", render_html(result).encode(),
-                           list(REPORT_SECURITY_HEADERS))
-    return WebResponse(200, "application/json; charset=utf-8", render_json(result).encode(),
-                       list(API_SECURITY_HEADERS))
+        return WebResponse(200, "text/html; charset=utf-8", render_html(result).encode(), list(REPORT_SECURITY_HEADERS))
+    return WebResponse(200, "application/json; charset=utf-8", render_json(result).encode(), list(API_SECURITY_HEADERS))
 
 
 def static_file(name: str) -> WebResponse:

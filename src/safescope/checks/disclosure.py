@@ -49,8 +49,7 @@ class DisclosureCheck(Check):
                     "Software versions are disclosed in headers",
                     Status.WARN,
                     Severity.LOW,
-                    description="Version banners make it easier to match the server against known "
-                    "vulnerabilities.",
+                    description="Version banners make it easier to match the server against known vulnerabilities.",
                     recommendation="Hide version numbers (e.g. 'server_tokens off;' in nginx, "
                     "'ServerTokens Prod' in Apache, remove X-Powered-By).",
                     evidence="; ".join(leaks),
@@ -96,8 +95,11 @@ class DisclosureCheck(Check):
         content_type = (resp.headers.get("Content-Type") or "").lower()
         if resp.status == 200 and "contact:" in resp.text.lower() and "html" not in content_type:
             contact = next(
-                (line.split(":", 1)[1].strip() for line in resp.text.splitlines()
-                 if line.lower().startswith("contact:")),
+                (
+                    line.split(":", 1)[1].strip()
+                    for line in resp.text.splitlines()
+                    if line.lower().startswith("contact:")
+                ),
                 "",
             )
             return self.passed("security_txt", "security.txt publishes a security contact", contact)
@@ -106,8 +108,7 @@ class DisclosureCheck(Check):
             "No security.txt file",
             Status.WARN,
             Severity.INFO,
-            description="security.txt (RFC 9116) tells researchers how to report vulnerabilities "
-            "to you responsibly.",
+            description="security.txt (RFC 9116) tells researchers how to report vulnerabilities to you responsibly.",
             recommendation="Publish /.well-known/security.txt with at least 'Contact:' and 'Expires:'.",
             evidence=f"HTTP {resp.status}",
             references=[SECURITY_TXT],

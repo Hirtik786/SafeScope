@@ -100,8 +100,7 @@ class HeadersCheck(Check):
                     "CSP allows unsafe script sources",
                     Status.WARN,
                     Severity.MEDIUM,
-                    description="These sources weaken the policy enough that it may not stop XSS: "
-                    + ", ".join(weak),
+                    description="These sources weaken the policy enough that it may not stop XSS: " + ", ".join(weak),
                     recommendation="Replace inline scripts with nonces or hashes and remove "
                     "'unsafe-eval' and wildcards from script-src.",
                     evidence=raw,
@@ -128,8 +127,7 @@ class HeadersCheck(Check):
             Severity.MEDIUM,
             description="Other sites can embed this page in an invisible frame and trick users into "
             "clicking on it (clickjacking).",
-            recommendation="Send \"Content-Security-Policy: frame-ancestors 'self'\" or "
-            "'X-Frame-Options: DENY'.",
+            recommendation="Send \"Content-Security-Policy: frame-ancestors 'self'\" or 'X-Frame-Options: DENY'.",
             evidence=xfo or "",
             references=[MDN + "X-Frame-Options", MDN + "Content-Security-Policy/frame-ancestors"],
         )
@@ -142,8 +140,7 @@ class HeadersCheck(Check):
             "X-Content-Type-Options: nosniff is missing",
             Status.FAIL,
             Severity.LOW,
-            description="Browsers may guess ('sniff') content types and execute uploaded files as "
-            "scripts.",
+            description="Browsers may guess ('sniff') content types and execute uploaded files as scripts.",
             recommendation="Send 'X-Content-Type-Options: nosniff'.",
             evidence=value or "",
             references=[MDN + "X-Content-Type-Options"],

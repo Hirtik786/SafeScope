@@ -65,9 +65,24 @@ def https_port(tmp_path: Path) -> Iterator[int]:
         pytest.skip("openssl CLI not available")
     cert, key = tmp_path / "cert.pem", tmp_path / "key.pem"
     subprocess.run(
-        ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "30",
-         "-subj", "/CN=localhost", "-keyout", str(key), "-out", str(cert)],
-        check=True, capture_output=True,
+        [
+            "openssl",
+            "req",
+            "-x509",
+            "-newkey",
+            "rsa:2048",
+            "-nodes",
+            "-days",
+            "30",
+            "-subj",
+            "/CN=localhost",
+            "-keyout",
+            str(key),
+            "-out",
+            str(cert),
+        ],
+        check=True,
+        capture_output=True,
     )
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -103,8 +118,21 @@ def test_inspect_tls_on_self_signed_server(https_port):
 
 def test_cli_json_against_local_server(http_port, tmp_path, capsys):
     out = tmp_path / "report.json"
-    code = main(["scan", f"http://127.0.0.1:{http_port}/", "-f", "json", "-o", str(out),
-                 "--skip", "tls", "--fail-on", "medium", "-q"])
+    code = main(
+        [
+            "scan",
+            f"http://127.0.0.1:{http_port}/",
+            "-f",
+            "json",
+            "-o",
+            str(out),
+            "--skip",
+            "tls",
+            "--fail-on",
+            "medium",
+            "-q",
+        ]
+    )
     data = json.loads(out.read_text())
     ids = {f["id"] for f in data["findings"]}
     assert "transport.https.unavailable" in ids

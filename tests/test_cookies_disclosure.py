@@ -82,8 +82,11 @@ def test_security_txt_found_and_missing(make_ctx):
         "example.com",
         {
             base: make_response(base),
-            sec: make_response(sec, headers={"Content-Type": "text/plain"},
-                               body=b"Contact: mailto:security@example.com\nExpires: 2030-01-01T00:00:00Z\n"),
+            sec: make_response(
+                sec,
+                headers={"Content-Type": "text/plain"},
+                body=b"Contact: mailto:security@example.com\nExpires: 2030-01-01T00:00:00Z\n",
+            ),
         },
     )
     f = {x.id: x for x in DisclosureCheck().run(ok)}

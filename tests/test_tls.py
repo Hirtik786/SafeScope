@@ -10,9 +10,18 @@ from safescope.tls import TLSInfo
 
 
 def info(**kw) -> TLSInfo:
-    base = dict(host="example.com", port=443, connected=True, verified=True, protocol="TLSv1.3",
-                cipher="TLS_AES_256_GCM_SHA384", cipher_bits=256, subject_cn="example.com",
-                issuer="Let's Encrypt", not_after=datetime.now(timezone.utc) + timedelta(days=90))
+    base = dict(
+        host="example.com",
+        port=443,
+        connected=True,
+        verified=True,
+        protocol="TLSv1.3",
+        cipher="TLS_AES_256_GCM_SHA384",
+        cipher_bits=256,
+        subject_cn="example.com",
+        issuer="Let's Encrypt",
+        not_after=datetime.now(timezone.utc) + timedelta(days=90),
+    )
     base.update(kw)
     return TLSInfo(**base)
 
@@ -29,9 +38,11 @@ def test_healthy_tls():
 
 @pytest.mark.parametrize(
     "days, fid, severity",
-    [(-2, "tls.certificate.expired", Severity.CRITICAL),
-     (3, "tls.certificate.expiring", Severity.HIGH),
-     (20, "tls.certificate.expiring", Severity.LOW)],
+    [
+        (-2, "tls.certificate.expired", Severity.CRITICAL),
+        (3, "tls.certificate.expiring", Severity.HIGH),
+        (20, "tls.certificate.expiring", Severity.LOW),
+    ],
 )
 def test_expiry(days, fid, severity):
     f = analyze(info(not_after=datetime.now(timezone.utc) + timedelta(days=days, hours=1)))

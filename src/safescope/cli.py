@@ -47,23 +47,31 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"SafeScope {__version__}")
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
 
-    scan = sub.add_parser("scan", help="scan a website", epilog=EPILOG,
-                          formatter_class=argparse.RawDescriptionHelpFormatter)
+    scan = sub.add_parser(
+        "scan", help="scan a website", epilog=EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     scan.add_argument("target", help="URL or host name, e.g. example.com or https://example.com/app")
-    scan.add_argument("-f", "--format", choices=sorted(REPORTERS), default="console",
-                      help="output format (default: console)")
+    scan.add_argument(
+        "-f", "--format", choices=sorted(REPORTERS), default="console", help="output format (default: console)"
+    )
     scan.add_argument("-o", "--output", type=Path, help="write the report to a file instead of stdout")
     scan.add_argument("--only", type=_csv, metavar="IDS", help="comma separated checks to run")
     scan.add_argument("--skip", type=_csv, metavar="IDS", help="comma separated checks to skip")
     scan.add_argument("--timeout", type=float, default=10.0, help="network timeout in seconds (default: 10)")
-    scan.add_argument("--fail-on", metavar="SEVERITY", type=Severity.parse,
-                      help="exit with code 1 if an issue of this severity or higher is found "
-                           "(info, low, medium, high, critical)")
+    scan.add_argument(
+        "--fail-on",
+        metavar="SEVERITY",
+        type=Severity.parse,
+        help="exit with code 1 if an issue of this severity or higher is found (info, low, medium, high, critical)",
+    )
     scan.add_argument("--no-color", action="store_true", help="disable coloured console output")
     scan.add_argument("-v", "--verbose", action="store_true", help="show evidence for passed checks too")
     scan.add_argument("-q", "--quiet", action="store_true", help="no progress messages on stderr")
-    scan.add_argument("--public-only", action="store_true",
-                      help="refuse targets (and redirects) that resolve to private/internal addresses")
+    scan.add_argument(
+        "--public-only",
+        action="store_true",
+        help="refuse targets (and redirects) that resolve to private/internal addresses",
+    )
 
     sub.add_parser("checks", help="list available checks")
 
@@ -120,8 +128,7 @@ def _run_scan(args: argparse.Namespace) -> int:
     if args.output:
         args.output.write_text(report, encoding="utf-8")
         if not args.quiet:
-            print(f"Report written to {args.output} (grade {result.grade}, score {result.score}/100)",
-                  file=sys.stderr)
+            print(f"Report written to {args.output} (grade {result.grade}, score {result.score}/100)", file=sys.stderr)
     else:
         sys.stdout.write(report)
 
