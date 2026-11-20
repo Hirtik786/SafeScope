@@ -98,7 +98,12 @@ class ScanContext:
         return cached
 
     def _insecure_client(self) -> HttpClient:
-        return HttpClient(timeout=self.client.timeout, verify_tls=False, user_agent=self.client.user_agent)
+        return HttpClient(
+            timeout=self.client.timeout,
+            verify_tls=False,
+            user_agent=self.client.user_agent,
+            url_guard=self.client.url_guard,
+        )
 
     def main_response(self) -> Response:
         """The page as a visitor sees it (redirects followed)."""
@@ -111,6 +116,8 @@ class ScanContext:
 
     def tls_info(self) -> TLSInfo:
         if self._tls is _MISSING:
+            if self.client.url_guard is not None:
+                self.client.url_guard(self.https_url())
             self._tls = self.tls_inspector(self.host, self.port if self.scheme == "https" else 443,
                                            self.client.timeout)
         assert isinstance(self._tls, TLSInfo)

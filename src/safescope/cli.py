@@ -26,6 +26,7 @@ examples:
   safescope scan https://example.com -f html -o report.html
   safescope scan example.com --only headers,cookies -f json
   safescope scan staging.example.com --fail-on medium   # for CI pipelines
+  safescope serve                                       # web UI on http://127.0.0.1:8000
 
 exit codes: 0 ok, 1 findings at/above --fail-on, 2 usage error, 3 target unreachable
 Only scan systems you own or have explicit permission to test.
@@ -61,8 +62,14 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--no-color", action="store_true", help="disable coloured console output")
     scan.add_argument("-v", "--verbose", action="store_true", help="show evidence for passed checks too")
     scan.add_argument("-q", "--quiet", action="store_true", help="no progress messages on stderr")
+    scan.add_argument("--public-only", action="store_true",
+                      help="refuse targets (and redirects) that resolve to private/internal addresses")
 
     sub.add_parser("checks", help="list available checks")
+
+    serve = sub.add_parser("serve", help="run the web UI and JSON API locally")
+    serve.add_argument("--host", default="127.0.0.1", help="interface to bind (default: 127.0.0.1)")
+    serve.add_argument("--port", type=int, default=8000, help="port (default: 8000)")
     return parser
 
 
@@ -84,7 +91,13 @@ def _run_scan(args: argparse.Namespace) -> int:
         if not args.quiet and sys.stderr.isatty():
             print(f"\r\033[K  running {check.name}…", end="", file=sys.stderr, flush=True)
 
-    scanner = Scanner(checks=checks, client=HttpClient(timeout=args.timeout), on_check_start=progress)
+    guard = None
+    if args.public_only:
+        from safescope.netguard import assert_public_url
+
+        guard = assert_public_url
+    client = HttpClient(timeout=args.timeout, url_guard=guard)
+    scanner = Scanner(checks=checks, client=client, on_check_start=progress)
     try:
         result = scanner.scan(args.target)
     except ValueError as exc:
@@ -125,5 +138,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _list_checks()
     if args.command == "scan":
         return _run_scan(args)
+    if args.command == "serve":
+        from safescope.web import serve
+
+        serve(args.host, args.port)
+        return EXIT_OK
     parser.print_help()
     return EXIT_USAGE

@@ -102,7 +102,12 @@ def inspect_tls(host: str, port: int = 443, timeout: float = 10.0) -> TLSInfo:
         except (OSError, ssl.SSLError) as exc2:
             info.error = str(exc2)
             return info
-    except (OSError, ssl.SSLError) as exc:
+    except ssl.SSLError as exc:
+        info.error = str(exc) or exc.__class__.__name__
+        # A modern handshake failed: maybe the server *only* speaks deprecated TLS.
+        _probe_legacy(host, port, timeout, info)
+        return info
+    except OSError as exc:
         info.error = str(exc) or exc.__class__.__name__
         return info
 

@@ -5,8 +5,8 @@
   },
   "target": "http://127.0.0.1:8000/",
   "final_url": "http://127.0.0.1:8000/",
-  "started_at": "2026-11-20T14:07:09+00:00",
-  "duration_seconds": 0.015,
+  "started_at": "2026-11-20T14:18:31+00:00",
+  "duration_seconds": 0.012,
   "score": 5,
   "grade": "F",
   "summary": {

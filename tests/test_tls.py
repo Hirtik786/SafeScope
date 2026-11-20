@@ -58,3 +58,8 @@ def test_outdated_negotiated_protocol():
 def test_handshake_failure_is_informational():
     f = analyze(TLSInfo(host="x", port=443, error="refused"))
     assert f["tls.handshake"].status is Status.INFO
+
+
+def test_server_that_only_speaks_legacy_tls():
+    f = analyze(TLSInfo(host="x", port=443, error="unsupported protocol", legacy_protocols=["TLSv1.0"]))
+    assert f["tls.protocol.legacy_only"].severity is Severity.HIGH

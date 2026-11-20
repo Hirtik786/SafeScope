@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import http.client
 import ssl
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlsplit
 
@@ -79,12 +79,16 @@ class HttpClient:
         timeout: float = DEFAULT_TIMEOUT,
         verify_tls: bool = True,
         user_agent: str | None = None,
+        url_guard: Callable[[str], None] | None = None,
     ) -> None:
         from safescope._version import __version__
 
         self.timeout = timeout
         self.verify_tls = verify_tls
         self.user_agent = user_agent or USER_AGENT.format(version=__version__)
+        #: called with every URL (including redirect hops) before connecting;
+        #: raise FetchError to refuse it. Used for SSRF protection in the web app.
+        self.url_guard = url_guard
 
     def _ssl_context(self) -> ssl.SSLContext:
         if self.verify_tls:
@@ -98,6 +102,8 @@ class HttpClient:
         parts = urlsplit(url)
         if parts.scheme not in ("http", "https") or not parts.hostname:
             raise FetchError(f"unsupported URL: {url!r}")
+        if self.url_guard is not None:
+            self.url_guard(url)
         path = parts.path or "/"
         if parts.query:
             path = f"{path}?{parts.query}"

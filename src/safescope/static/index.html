@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SafeScope – free website security check</title>
+<meta name="description" content="Check HTTPS, TLS, security headers, cookies and information leaks of any website in seconds. Passive, open-source checks.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <h1>🛡️ SafeScope</h1>
+    <p class="tagline">Free, passive security check for any website: HTTPS, TLS, security headers, cookies and information leaks.</p>
+    <form id="scan-form" autocomplete="off">
+      <label for="target" class="sr-only">Website address</label>
+      <input id="target" name="target" type="text" inputmode="url" placeholder="example.com" required maxlength="2048" spellcheck="false">
+      <button id="scan-btn" type="submit">Scan</button>
+      <label class="consent">
+        <input id="consent" type="checkbox" required>
+        I own this website or I am authorised to test it.
+      </label>
+    </form>
+    <p class="fine">SafeScope only makes a few normal requests, exactly like a browser. No attacks, no payloads.</p>
+  </header>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <section id="result" hidden>
+    <div class="summary">
+      <div id="grade" class="grade"></div>
+      <div>
+        <h2 id="result-target"></h2>
+        <p id="result-meta" class="muted"></p>
+        <p><a id="full-report" target="_blank" rel="noopener">Open full HTML report ↗</a>
+           · <a id="json-link" target="_blank" rel="noopener">JSON</a></p>
+      </div>
+    </div>
+    <div id="counts" class="counts"></div>
+    <div id="findings"></div>
+  </section>
+
+  <footer>
+    Open source on <a href="https://github.com/Karim-Bazooka/SafeScope">GitHub</a> ·
+    also available as a <a href="https://github.com/Karim-Bazooka/SafeScope#-quick-start">command line tool</a>
+    and <a href="https://github.com/Karim-Bazooka/SafeScope#%EF%B8%8F-use-it-in-ci">GitHub Action</a>.
+  </footer>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

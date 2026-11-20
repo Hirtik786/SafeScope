@@ -100,6 +100,12 @@ def _finding_html(f: Finding) -> str:
     return "".join(parts)
 
 
+def _check_name(check_id: str) -> str:
+    from safescope.checks import ALL_CHECKS
+
+    return next((c.name for c in ALL_CHECKS if c.id == check_id), check_id.title())
+
+
 def render_html(result: ScanResult) -> str:
     color = GRADE_COLOR[result.grade[0]]
     sections: dict[str, list[Finding]] = {}
@@ -111,7 +117,7 @@ def render_html(result: ScanResult) -> str:
         problems = sum(1 for f in findings if f.is_problem)
         findings = sorted(findings, key=lambda f: (not f.is_problem, -f.severity))
         body.append(
-            f"<section><h2>{escape(check_id.title())}"
+            f"<section><h2>{escape(_check_name(check_id))}"
             f"<small>{problems} issue{'s' if problems != 1 else ''}</small></h2>"
             + "".join(_finding_html(f) for f in findings)
             + "</section>"

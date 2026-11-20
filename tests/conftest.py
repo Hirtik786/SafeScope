@@ -63,3 +63,16 @@ GOOD_HEADERS = {
     "Permissions-Policy": "camera=(), microphone=()",
     "Server": "nginx",
 }
+
+
+def pytest_addoption(parser):
+    parser.addoption("--run-network", action="store_true", help="run tests that reach real websites")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--run-network"):
+        return
+    skip = pytest.mark.skip(reason="needs internet: use --run-network")
+    for item in items:
+        if "network" in item.keywords:
+            item.add_marker(skip)

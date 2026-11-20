@@ -26,6 +26,21 @@ class TLSCheck(Check):
         return self.analyze(info)
 
     def analyze(self, info: TLSInfo) -> list[Finding]:
+        if not info.connected and info.legacy_protocols:
+            return [
+                self.finding(
+                    "protocol.legacy_only",
+                    "Server only supports deprecated TLS versions",
+                    Status.FAIL,
+                    Severity.HIGH,
+                    description="Modern clients refuse to connect: the server negotiates only "
+                    + ", ".join(info.legacy_protocols)
+                    + ", which were deprecated in 2021 (RFC 8996).",
+                    recommendation="Enable TLS 1.2 and TLS 1.3 and disable TLS 1.0/1.1.",
+                    evidence=info.error,
+                    references=[RFC_8996, MOZILLA_TLS],
+                )
+            ]
         if not info.connected:
             return [
                 self.finding(

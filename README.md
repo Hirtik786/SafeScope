@@ -12,7 +12,7 @@ from your terminal, your CI pipeline, or Python code. Zero dependencies.
 ![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-[Quick start](#-quick-start) · [Checks](#-what-it-checks) · [CI usage](#-use-it-in-ci) · [Contributing](CONTRIBUTING.md) · [العربية](docs/README.ar.md)
+[Quick start](#-quick-start) · [Web app](#-web-app) · [Checks](#-what-it-checks) · [CI usage](#-use-it-in-ci) · [Contributing](CONTRIBUTING.md) · [العربية](docs/README.ar.md)
 
 <img src="docs/images/html-report.png" alt="SafeScope HTML report" width="720">
 
@@ -33,6 +33,7 @@ exploitation. That makes it safe to run against production and easy to put in CI
 - **Graded** — a 0–100 score and an A+ → F grade you can track over time ([how it's computed](docs/scoring.md)).
 - **Four output formats** — colourful console, JSON, Markdown (for PR comments / job summaries) and a self-contained HTML report.
 - **CI-ready** — `--fail-on medium` turns it into a quality gate.
+- **Web app included** — deploy your own scanner page to Vercel in one click, hardened against SSRF abuse.
 - **Zero dependencies** — pure Python standard library, installs in a second.
 - **Easy to extend** — a check is one small class; see [Writing a check](docs/writing-checks.md).
 
@@ -74,6 +75,7 @@ safescope scan https://example.com -f html -o report.html   # shareable HTML rep
 safescope scan example.com -f json > report.json              # machine readable
 safescope scan example.com --only headers,cookies             # run a subset
 safescope checks                                              # list all checks
+safescope scan example.com --public-only                      # refuse internal/private targets
 ```
 
 ### Try it safely on your own machine
@@ -89,6 +91,35 @@ python examples/vulnerable_demo_server.py --fixed    # ...and the secure version
 
 See [`examples/sample-report.html`](examples/sample-report.html) and
 [`examples/sample-report.json`](examples/sample-report.json) for the generated output.
+
+## 🌐 Web app
+
+SafeScope ships with a small web UI and JSON API.
+
+```bash
+safescope serve            # http://127.0.0.1:8000
+```
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FKarim-Bazooka%2FSafeScope)
+
+Or deploy it yourself; see [docs/deploy.md](docs/deploy.md). The API:
+
+```text
+GET /api/scan?target=example.com              → JSON result
+GET /api/scan?target=example.com&format=html  → full HTML report
+GET /api/health                               → {"status": "ok"}
+```
+
+Because the web version accepts URLs from anyone, it is hardened:
+
+- **SSRF protection** — every connection (including each redirect hop and the TLS handshake) is
+  refused if the host resolves to a private, loopback, link-local or cloud-metadata address,
+  or uses a port other than 80/443/8080/8443.
+- **Rate limiting** — 10 scans per minute per client IP.
+- **Strict security headers** — the UI scores A+ with SafeScope itself (CSP without
+  `unsafe-inline` scripts, no `innerHTML` anywhere).
+
+<img src="docs/images/web-ui.png" alt="SafeScope web UI" width="640">
 
 ## 🔍 What it checks
 
@@ -144,11 +175,11 @@ for finding in result.problems:
 
 ## 🗺️ Roadmap
 
-- [x] **v0.1** – HTTPS/HSTS, TLS, headers, cookies, disclosure · console/JSON/Markdown/HTML reports · CI action
+- [x] **v0.1** – HTTPS/HSTS, TLS, headers, cookies, disclosure · console/JSON/Markdown/HTML reports · CI action · web app
 - [ ] **v0.2** – Scan many targets from a file, concurrent scanning, SARIF output for GitHub code scanning
 - [ ] **v0.3** – Config file (`safescope.toml`) to ignore accepted findings, baseline comparison between scans
 - [ ] **v0.4** – More checks: mixed content, subresource integrity, DNS (CAA, DNSSEC), email security (SPF/DMARC)
-- [ ] **v1.0** – Web dashboard to track the grade of several sites over time
+- [ ] **v1.0** – Dashboard to track the grade of several sites over time
 
 Ideas and votes are welcome in [Issues](https://github.com/Karim-Bazooka/SafeScope/issues).
 

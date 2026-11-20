@@ -1,0 +1,1 @@
+# SafeScope has no runtime dependencies. This file exists so Vercel detects the Python runtime.

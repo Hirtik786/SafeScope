@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/scan.py": {
+      "maxDuration": 60,
+      "includeFiles": "src/safescope/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/scan", "destination": "/api/scan?path=api/scan" },
+    { "source": "/api/health", "destination": "/api/scan?path=api/health" },
+    { "source": "/", "destination": "/api/scan?path=" },
+    { "source": "/.well-known/security.txt", "destination": "/api/scan?path=.well-known/security.txt" },
+    { "source": "/:file(app\\.js|style\\.css|index\\.html)", "destination": "/api/scan?path=:file" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" }
+      ]
+    }
+  ]
+}
