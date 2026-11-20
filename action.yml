@@ -1,0 +1,77 @@
+name: "SafeScope security scan"
+description: "Passive web security posture scan: HTTPS, TLS, security headers, cookies and information disclosure."
+author: "Karim-Bazooka"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  target:
+    description: "URL or host name to scan (only scan sites you own or are authorised to test)"
+    required: true
+  fail-on:
+    description: "Fail the job on findings of this severity or higher (info, low, medium, high, critical). Empty = never fail."
+    required: false
+    default: "high"
+  skip:
+    description: "Comma separated check IDs to skip"
+    required: false
+    default: ""
+  python-version:
+    description: "Python version used to run SafeScope"
+    required: false
+    default: "3.12"
+
+outputs:
+  grade:
+    description: "Letter grade (A+ to F)"
+    value: ${{ steps.scan.outputs.grade }}
+  score:
+    description: "Score from 0 to 100"
+    value: ${{ steps.scan.outputs.score }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install SafeScope
+      shell: bash
+      run: python -m pip install --quiet "${{ github.action_path }}"
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        SKIP: ${{ inputs.skip }}
+      run: |
+        args=(scan "$TARGET" -q)
+        [ -n "$SKIP" ] && args+=(--skip "$SKIP")
+        safescope "${args[@]}" -f json -o safescope-report.json || true
+        safescope "${args[@]}" -f html -o safescope-report.html || true
+        safescope "${args[@]}" -f markdown >> "$GITHUB_STEP_SUMMARY" || true
+        python - <<'PY' >> "$GITHUB_OUTPUT"
+        import json
+        data = json.load(open("safescope-report.json"))
+        print(f"grade={data['grade']}")
+        print(f"score={data['score']}")
+        PY
+        if [ -n "$FAIL_ON" ]; then
+          fail_args=("${args[@]}" --fail-on "$FAIL_ON" --no-color)
+          safescope "${fail_args[@]}"
+        else
+          safescope "${args[@]}" --no-color
+        fi
+
+    - name: Upload reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: safescope-report
+        path: |
+          safescope-report.html
+          safescope-report.json

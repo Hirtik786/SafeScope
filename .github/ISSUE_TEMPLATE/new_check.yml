@@ -1,0 +1,29 @@
+name: New check proposal
+description: Suggest a new passive security check
+labels: [enhancement, new-check]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should SafeScope check?
+      description: Describe the misconfiguration and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How can it be detected passively?
+      description: Which request/response data reveals it? SafeScope never sends attack payloads.
+    validations:
+      required: true
+  - type: input
+    id: refs
+    attributes:
+      label: References
+      placeholder: OWASP, MDN, RFC links
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to implement this myself

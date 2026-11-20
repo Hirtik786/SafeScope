@@ -1,0 +1,196 @@
+{
+  "tool": {
+    "name": "SafeScope",
+    "version": "0.1.0"
+  },
+  "target": "http://127.0.0.1:8000/",
+  "final_url": "http://127.0.0.1:8000/",
+  "started_at": "2026-11-20T14:07:09+00:00",
+  "duration_seconds": 0.015,
+  "score": 5,
+  "grade": "F",
+  "summary": {
+    "critical": 0,
+    "high": 1,
+    "medium": 6,
+    "low": 5,
+    "info": 1
+  },
+  "metadata": {
+    "status": 200,
+    "redirects": [],
+    "server": "demo ",
+    "certificate_verified": true
+  },
+  "findings": [
+    {
+      "id": "transport.https.unavailable",
+      "check_id": "transport",
+      "title": "HTTPS is not available",
+      "status": "fail",
+      "severity": "high",
+      "description": "The site could not be loaded over HTTPS, so all traffic can be read or modified by anyone on the network path.",
+      "recommendation": "Serve the site over HTTPS (free certificates are available from Let's Encrypt).",
+      "evidence": "TLS error: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1035)",
+      "references": [
+        "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+      ]
+    },
+    {
+      "id": "transport.http.no_redirect",
+      "check_id": "transport",
+      "title": "HTTP does not redirect to HTTPS",
+      "status": "fail",
+      "severity": "medium",
+      "description": "Visitors who type the address without https:// stay on an unencrypted connection.",
+      "recommendation": "Answer every plain HTTP request with a 301 redirect to the HTTPS version of the same URL.",
+      "evidence": "http://127.0.0.1:8000/ answered 200 without redirecting",
+      "references": [
+        "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+      ]
+    },
+    {
+      "id": "headers.csp.unsafe",
+      "check_id": "headers",
+      "title": "CSP allows unsafe script sources",
+      "status": "warn",
+      "severity": "medium",
+      "description": "These sources weaken the policy enough that it may not stop XSS: 'unsafe-inline', 'unsafe-eval', *",
+      "recommendation": "Replace inline scripts with nonces or hashes and remove 'unsafe-eval' and wildcards from script-src.",
+      "evidence": "default-src * 'unsafe-inline' 'unsafe-eval'",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"
+      ]
+    },
+    {
+      "id": "headers.framing.missing",
+      "check_id": "headers",
+      "title": "No clickjacking protection",
+      "status": "fail",
+      "severity": "medium",
+      "description": "Other sites can embed this page in an invisible frame and trick users into clicking on it (clickjacking).",
+      "recommendation": "Send \"Content-Security-Policy: frame-ancestors 'self'\" or 'X-Frame-Options: DENY'.",
+      "evidence": "",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors"
+      ]
+    },
+    {
+      "id": "headers.nosniff.missing",
+      "check_id": "headers",
+      "title": "X-Content-Type-Options: nosniff is missing",
+      "status": "fail",
+      "severity": "low",
+      "description": "Browsers may guess ('sniff') content types and execute uploaded files as scripts.",
+      "recommendation": "Send 'X-Content-Type-Options: nosniff'.",
+      "evidence": "",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"
+      ]
+    },
+    {
+      "id": "headers.referrer.missing",
+      "check_id": "headers",
+      "title": "Referrer-Policy header is missing",
+      "status": "warn",
+      "severity": "low",
+      "description": "Full URLs (which may contain tokens or private paths) can leak to other sites through the Referer header.",
+      "recommendation": "Send 'Referrer-Policy: strict-origin-when-cross-origin'.",
+      "evidence": "",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
+      ]
+    },
+    {
+      "id": "headers.permissions.missing",
+      "check_id": "headers",
+      "title": "Permissions-Policy header is missing",
+      "status": "warn",
+      "severity": "low",
+      "description": "Without it, embedded content may request powerful features such as the camera, microphone or geolocation.",
+      "recommendation": "Disable what you do not use, e.g. 'Permissions-Policy: camera=(), microphone=(), geolocation=()'.",
+      "evidence": "",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy",
+        "https://owasp.org/www-project-secure-headers/"
+      ]
+    },
+    {
+      "id": "headers.x_xss_protection.enabled",
+      "check_id": "headers",
+      "title": "Deprecated X-XSS-Protection filter is enabled",
+      "status": "warn",
+      "severity": "low",
+      "description": "The legacy XSS auditor has been removed from modern browsers and could introduce cross-site leaks in old ones.",
+      "recommendation": "Send 'X-XSS-Protection: 0' (or drop it) and rely on a strong CSP.",
+      "evidence": "1; mode=block",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection"
+      ]
+    },
+    {
+      "id": "cookies.PHPSESSID.flags",
+      "check_id": "cookies",
+      "title": "Cookie 'PHPSESSID': missing HttpOnly, missing SameSite",
+      "status": "fail",
+      "severity": "medium",
+      "description": "Secure keeps the cookie off plain HTTP, HttpOnly hides it from JavaScript (limiting XSS damage) and SameSite helps against CSRF.",
+      "recommendation": "Set-Cookie: PHPSESSID=...; Secure; HttpOnly; SameSite=Lax",
+      "evidence": "attributes: path",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
+      ]
+    },
+    {
+      "id": "cookies.tracking.flags",
+      "check_id": "cookies",
+      "title": "Cookie 'tracking': SameSite=None without Secure",
+      "status": "fail",
+      "severity": "medium",
+      "description": "Secure keeps the cookie off plain HTTP, HttpOnly hides it from JavaScript (limiting XSS damage) and SameSite helps against CSRF.",
+      "recommendation": "Set-Cookie: tracking=...; Secure; HttpOnly; SameSite=Lax",
+      "evidence": "attributes: samesite",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
+      ]
+    },
+    {
+      "id": "disclosure.versions",
+      "check_id": "disclosure",
+      "title": "Software versions are disclosed in headers",
+      "status": "warn",
+      "severity": "low",
+      "description": "Version banners make it easier to match the server against known vulnerabilities.",
+      "recommendation": "Hide version numbers (e.g. 'server_tokens off;' in nginx, 'ServerTokens Prod' in Apache, remove X-Powered-By).",
+      "evidence": "Server: Apache/2.4.41 (Ubuntu); X-Powered-By: PHP/7.4.3",
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server"
+      ]
+    },
+    {
+      "id": "disclosure.cors.wildcard_credentials",
+      "check_id": "disclosure",
+      "title": "CORS allows any origin together with credentials",
+      "status": "fail",
+      "severity": "medium",
+      "description": "This combination is invalid and signals a CORS configuration that may reflect arbitrary origins on other endpoints.",
+      "recommendation": "Allow-list specific trusted origins instead of '*'.",
+      "evidence": "Access-Control-Allow-Origin: *; Access-Control-Allow-Credentials: true",
+      "references": []
+    },
+    {
+      "id": "disclosure.security_txt.missing",
+      "check_id": "disclosure",
+      "title": "No security.txt file",
+      "status": "warn",
+      "severity": "info",
+      "description": "security.txt (RFC 9116) tells researchers how to report vulnerabilities to you responsibly.",
+      "recommendation": "Publish /.well-known/security.txt with at least 'Contact:' and 'Expires:'.",
+      "evidence": "HTTP 404",
+      "references": [
+        "https://securitytxt.org/"
+      ]
+    }
+  ]
+}
