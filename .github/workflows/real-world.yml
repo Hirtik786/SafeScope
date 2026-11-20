@@ -4,7 +4,7 @@ name: Real-world scans
 # Targets are badssl.com (built for testing TLS tools) and large public sites.
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
   schedule:
     - cron: "17 5 * * 1" # weekly, catches changes on the internet side
