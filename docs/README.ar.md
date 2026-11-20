@@ -21,7 +21,7 @@
 ## التشغيل
 
 ```bash
-pip install git+https://github.com/Karim-Bazooka/SafeScope.git
+pip install safescope-scanner
 safescope scan example.com
 safescope scan example.com -f html -o report.html
 safescope scan a.com b.com --targets-file sites.txt   # كذا موقع مع بعض

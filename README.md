@@ -7,6 +7,7 @@
 Check HTTPS, TLS certificates, security headers, cookies and information leaks in seconds —
 from your terminal, your CI pipeline, a web page or Python code. Zero dependencies.
 
+[![PyPI](https://img.shields.io/pypi/v/safescope-scanner)](https://pypi.org/project/safescope-scanner/)
 [![CI](https://github.com/Karim-Bazooka/SafeScope/actions/workflows/ci.yml/badge.svg)](https://github.com/Karim-Bazooka/SafeScope/actions/workflows/ci.yml)
 [![Real-world scans](https://github.com/Karim-Bazooka/SafeScope/actions/workflows/real-world.yml/badge.svg)](https://github.com/Karim-Bazooka/SafeScope/actions/workflows/real-world.yml)
 ![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
@@ -50,7 +51,7 @@ Requires Python 3.10 or newer.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install git+https://github.com/Karim-Bazooka/SafeScope.git
+pip install safescope-scanner
 safescope scan example.com
 ```
 
@@ -59,7 +60,7 @@ safescope scan example.com
 ```powershell
 python -m venv .venv
 .venv\Scripts\activate
-pip install git+https://github.com/Karim-Bazooka/SafeScope.git
+pip install safescope-scanner
 safescope scan example.com
 ```
 
@@ -204,7 +205,7 @@ uploads the HTML and JSON reports as an artifact. For GitHub code scanning, see 
   multi-target scanning, SARIF, saved-report re-rendering, stricter CI
 - [ ] **v0.3** — config file (`safescope.toml`) to accept known findings, baseline diff between scans
 - [ ] **v0.4** — more passive checks: mixed content, subresource integrity, DNS (CAA), email (SPF/DMARC)
-- [ ] **v1.0** — stable IDs and JSON schema, packages on PyPI, tracked grades over time
+- [ ] **v1.0** — stable IDs and JSON schema, tracked grades over time
 
 Ideas and votes are welcome in [Issues](https://github.com/Karim-Bazooka/SafeScope/issues).
 
