@@ -136,3 +136,45 @@ class ScanResult:
             "metadata": self.metadata,
             "findings": [f.to_dict() for f in self.findings],
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ScanResult:
+        """Rebuild a result from :meth:`to_dict` output (e.g. a saved JSON report).
+
+        Raises ValueError with a readable message for files that are not
+        SafeScope reports or use an unsupported schema version.
+        """
+        if not isinstance(data, dict) or data.get("tool", {}).get("name") != "SafeScope":
+            raise ValueError("not a SafeScope JSON report")
+        version = data.get("schema_version", 1)
+        if version != SCHEMA_VERSION:
+            raise ValueError(f"unsupported report schema_version {version!r} (this SafeScope reads {SCHEMA_VERSION})")
+        try:
+            findings = [
+                Finding(
+                    id=str(f["id"]),
+                    check_id=str(f["check_id"]),
+                    title=str(f["title"]),
+                    status=Status(f["status"]),
+                    severity=Severity.parse(str(f.get("severity", "info"))),
+                    description=str(f.get("description", "")),
+                    recommendation=str(f.get("recommendation", "")),
+                    evidence=str(f.get("evidence", "")),
+                    references=tuple(str(r) for r in f.get("references", [])),
+                    confidence=Confidence(f.get("confidence", "high")),
+                )
+                for f in data.get("findings", [])
+            ]
+            return cls(
+                target=str(data["target"]),
+                final_url=str(data.get("final_url", data["target"])),
+                started_at=str(data.get("started_at", "")),
+                duration_seconds=float(data.get("duration_seconds", 0.0)),
+                findings=findings,
+                score=int(data["score"]),
+                grade=str(data["grade"]),
+                tool_version=str(data["tool"].get("version", "")),
+                metadata=dict(data.get("metadata", {})),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"invalid SafeScope report: {exc}") from exc
